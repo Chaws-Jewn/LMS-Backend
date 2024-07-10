@@ -22,7 +22,7 @@ return new class extends Migration
             $table->string('image_url', 100)->nullable();
             $table->string('volume', 50)->nullable();
             $table->string('edition', 50)->nullable();
-            $table->string('pages', 20); // Pages is string for articles, validate on front end and back for materials
+            $table->string('pages', 20)->nullable(); // Pages is string for articles, validate on front end and back for materials
             $table->date('acquired_date')->nullable(); // nullable for articles
             $table->date('date_published')->nullable(); // nullable for books
             $table->string('remarks')->nullable();

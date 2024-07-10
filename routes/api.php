@@ -10,6 +10,7 @@ use App\Http\Controllers\StudentPortal\StudentViewController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\ActivityLogController;
+use App\Http\Controllers\Cataloging\AVController;
 
 use App\Http\Controllers\AuthController, App\Http\Controllers\CatalogingLogController, App\Http\Controllers\Cataloging\ArticleController,
 App\Http\Controllers\Cataloging\BookController, App\Http\Controllers\Cataloging\PeriodicalController, App\Http\Controllers\Cataloging\ProjectController,
@@ -117,11 +118,13 @@ Route::group(['middleware' => ['auth:sanctum', 'ability:cataloging']], function 
             Route::post('books/process', [BookController::class, 'add']);
             Route::post('periodicals/process', [PeriodicalController::class, 'add']);
             Route::post('articles/process', [ArticleController::class, 'add']);
+            Route::post('audio-visuals/process', [AVController::class, 'add']);
 
             // Update Materials
             Route::put('books/process/{id}', [BookController::class, 'update']);
             Route::put('periodicals/process/{id}', [PeriodicalController::class, 'update']);
             Route::put('articles/process/{id}', [ArticleController::class, 'update']);
+            Route::put('audio-visuals/process/{id}', [AVController::class, 'update']);
         });
 
         // ARCHIVE Materials
