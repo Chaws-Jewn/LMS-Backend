@@ -28,9 +28,13 @@ class ReserveBookController extends Controller
         }
 
         // Check if the material status allows reservation
-        // Assuming status 0 means available for reservation
         if ($material->status == 0) {
-            return response()->json(['error' => 'Material is not available for reservation'], 400);
+            return response()->json(['error' => 'Book is currently borrowed'], 400);
+        }
+
+
+        if ($material->status == 3) {
+            return response()->json(['error' => 'Book has not been returned'], 400);
         }
 
         // User and patron information
@@ -54,7 +58,7 @@ class ReserveBookController extends Controller
 
         // Allowed number of active reservations
         $activeReservationsCount = BorrowMaterial::where('user_id', $payload->user_id)
-                                            ->where('status', 1) // Assuming status 1 means active reservation
+                                            ->where('status', 0) // Assuming status 1 means active reservation
                                             ->count();
 
         if ($activeReservationsCount >= $materialsAllowed) {
@@ -69,8 +73,9 @@ class ReserveBookController extends Controller
         $reservation->book_id = $payload->book_id;
         $reservation->user_id = $payload->user_id;
         $reservation->reserve_date = now(); // Timestamp of reservation creation
-        $reservation->reserve_expiration = $payload->reserve_expiration; // Assuming reserve_expiration is provided
+        $reservation->reserve_expiration = $payload->reserve_expiration;
         $reservation->fine = 0; // Initial fine set to 0 for reservation
+        $reservation->reservation_type = 1; //assuming 1 is walk-in
         $reservation->status = 1; // Status 1 for pending reservation
 
         // Save the reservation record
@@ -92,15 +97,6 @@ class ReserveBookController extends Controller
         return response()->json(['error' => 'An error occurred while processing the reservation', 'details' => $e->getMessage()], 500);
     }
 }
-
-    // public function reservelist(Request $request){
-    //     $reservelist = Reservation::with(['user.program', 'user.department', 'user.patron'])
-    //                     ->whereHas('user', function($query){
-    //                         $query->where('status', 1);
-    //                     })
-    //                     ->get();
-    //     return response()->json($reservelist);
-    // }
 
     public function reservelist(Request $request, $type = null) {
         // Fetch all reservation data from the reservations table
@@ -283,3 +279,14 @@ class ReserveBookController extends Controller
         
         // $data = ['Reservation' => $reservation];
         // return response()->json($data);
+
+
+
+ // public function reservelist(Request $request){
+    //     $reservelist = Reservation::with(['user.program', 'user.department', 'user.patron'])
+    //                     ->whereHas('user', function($query){
+    //                         $query->where('status', 1);
+    //                     })
+    //                     ->get();
+    //     return response()->json($reservelist);
+    // }

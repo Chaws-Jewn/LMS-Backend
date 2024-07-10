@@ -14,7 +14,7 @@ use Exception, Carbon, Storage;
 /*  
     0 => already borrowed?
     1=> available
-    2 => missing
+    2 => missing or reserved?
     3 => unreturned
     4 => unlabeled
 */
@@ -29,12 +29,12 @@ class BorrowMaterialController extends Controller
         // Check if the accession exists in the materials table
         $material = Material::find($payload->book_id);
         if (!$material) {
-            return response()->json(['error' => 'Material not found'], 404);
+            return response()->json(['error' => 'Book not found'], 404);
         }
 
         // Check if the material status allows borrowing
         if ($material->status !== 1) {
-            return response()->json(['error' => 'Material is not available for borrowing'], 400);
+            return response()->json(['error' => 'Book is currently borrowed or not available'], 400);
         }
 
         // User and patron information
@@ -251,7 +251,7 @@ class BorrowMaterialController extends Controller
             }
 
             // Find the Material (assuming it represents a book or item being borrowed)
-            $material = Material::find($borrowMaterial->accession);
+            $material = Material::find($borrowMaterial->book_id);
 
             // Check if the material exists
             if (!$material) {
@@ -261,7 +261,7 @@ class BorrowMaterialController extends Controller
             }
 
             // Set material status to 'available' (assuming you have a status field)
-            $material->status = 'available';
+            $material->status = 1;
 
             // Save the changes to the Material
             $material->save();
