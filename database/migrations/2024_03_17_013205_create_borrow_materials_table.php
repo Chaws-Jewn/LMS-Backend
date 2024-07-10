@@ -24,6 +24,7 @@ return new class extends Migration
             // Reservations
             $table->timestamp('reserve_date')->nullable();
             $table->date('reserve_expiration')->nullable();
+            $table->tinyInteger('reservation_type')->nullable();
 
             // payments
             $table->float('fine', 2);

@@ -53,11 +53,11 @@ class UserSeeder extends Seeder
 
         /* RANDOM USERS */
         User::factory()->count(20)->create([
-            'role' => json_encode(['user'])
+            'role' => json_encode(['student'])
         ]);
         
         User::factory()->create([
-            'role' => json_encode(['user']),
+            'role' => json_encode(['student']),
             'id' => 202110194,
             'program' => 'BSIT',
             'gender' => 1,
@@ -68,7 +68,7 @@ class UserSeeder extends Seeder
         ]);
 
         User::factory()->create([
-            'role' => json_encode(['user']),
+            'role' => json_encode(['student']),
             'id' => 202111304,
             'program' => 'BSCS',
             'gender' => 1,
@@ -79,7 +79,7 @@ class UserSeeder extends Seeder
         ]);
 
         User::factory()->create([
-            'role' => json_encode(['user']),
+            'role' => json_encode(['student']),
             'id' => 202110876,
             'program' => 'BSBA-MKT',
             'gender' => 1,
@@ -90,7 +90,7 @@ class UserSeeder extends Seeder
         ]);
 
         User::factory()->create([
-            'role' => json_encode(['user']),
+            'role' => json_encode(['student']),
             'id' => 202110878,
             'program' => 'BSTM',
             'gender' => 0,
@@ -101,7 +101,7 @@ class UserSeeder extends Seeder
         ]);
 
         User::factory()->create([
-            'role' => json_encode(['user']),
+            'role' => json_encode(['student']),
             'id' => 202110265,
             'program' => 'BACOMM',
             'gender' => 1,
@@ -113,7 +113,7 @@ class UserSeeder extends Seeder
 
     
         User::factory()->create([
-            'role' => json_encode(['user']),
+            'role' => json_encode(['student']),
             'id' => 202110259,
             'program' => 'BSEMC',
             'patron_id' => 2,

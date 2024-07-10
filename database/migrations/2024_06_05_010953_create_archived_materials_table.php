@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::connection('archives')->create('materials', function (Blueprint $table) {
             $table->string('accession', 20)->unique();
 
-            // 0 -> books, 1 -> periodicals, 2 -> articles
+            // 0 -> books, 1 -> periodicals, 2 -> articles, 3 -> audio-visuals
             $table->tinyInteger('material_type');
             $table->string('title');
             $table->string('authors')->nullable();
@@ -22,7 +22,7 @@ return new class extends Migration
             $table->string('image_url', 100)->nullable();
             $table->string('volume', 50)->nullable();
             $table->string('edition', 50)->nullable();
-            $table->string('pages', 20); // Pages is string for articles, validate on front end and back for materials
+            $table->string('pages', 20)->nullable(); // Pages is string for articles, validate on front end and back for materials
             $table->date('acquired_date')->nullable(); // nullable for articles
             $table->date('date_published')->nullable(); // nullable for books
             $table->string('remarks')->nullable();
@@ -40,7 +40,7 @@ return new class extends Migration
             $table->tinyInteger('inventory_status')->nullable();
 
             // PERIODICALS
-            // 0 -> journal, 1 -> magazine, 2 -> article :: also applicable for articles
+            // 0 -> journal, 1 -> magazine, 2 -> newspaper :: also applicable for articles
             $table->integer('periodical_type')->nullable(); 
             $table->string('language', 20)->nullable();
             $table->string('issue', 30)->nullable();

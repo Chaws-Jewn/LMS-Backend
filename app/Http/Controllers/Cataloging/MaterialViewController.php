@@ -34,6 +34,12 @@ class MaterialViewController extends Controller
                 ->orderByDesc('updated_at')
                 ->get(['accession', 'title', 'author', 'publisher', 'date_published', 'copyright']);
                 break;
+
+            case 'audio-visuals':
+                $materials = Material::where([['material_type', 3]])
+                ->orderByDesc('updated_at')
+                ->get(['accession', 'title', 'authors', 'copyright']);
+                break;
             
             default:
                 return response()->json(['response' => 'Invalid material type']);
@@ -42,7 +48,7 @@ class MaterialViewController extends Controller
                 if($material->image_url != null)
                     $material->image_url = self::URL .  Storage::url($material->image_url);
 
-                if(in_array($type, ['books', 'periodicals']) && $material->authors)
+                if($material->authors)
                     $material->authors = json_decode($material->authors);
             }
 
@@ -58,13 +64,16 @@ class MaterialViewController extends Controller
     }
 
     public function getMaterialsByType(String $type, String $periodical_type) {
+        $columns = [];
         switch($type) {
             case 'periodicals':
                 $material_type = 1;
+                $columns = ['accession', 'title', 'authors', 'publisher', 'copyright'];
                 break;
 
             case 'articles':
                 $material_type = 2;
+                $columns = ['accession', 'title', 'authors', 'publisher', 'date_published', 'copyright'];
                 break;
 
             default:
@@ -73,7 +82,7 @@ class MaterialViewController extends Controller
         
         $materials = Material::where([['material_type', $material_type], ['periodical_type', $periodical_type]])
         ->orderByDesc('updated_at')
-        ->get(['accession', 'title', 'authors', 'publisher', 'date_published', 'copyright']);        
+        ->get($columns);        
 
         foreach($materials as $material) {
             if($material->image_url != null)
