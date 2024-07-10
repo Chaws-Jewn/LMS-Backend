@@ -1,52 +1,97 @@
 <?php
 
 namespace App\Http\Controllers\Circulation;
+use Illuminate\Support\Facades\DB;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Http\Controllers\BorrowMaterialController;
-use App\Models\Reservation;
+//use App\Models\Reservation;
+use App\Models\BorrowMaterial;
 use App\Models\User;
-use App\Models\Book;
+use App\Models\Material;
+use App\Models\Patron;
 use Exception;
 use Storage;
 
 class ReserveBookController extends Controller
 {
-    public function reservebook(Request $request){
-        
-        $payload=json_decode($request->payload);
+    public function reservebook(Request $request)
+{
+    // Decode the JSON payload from the request body
+    $payload = json_decode($request->getContent());
 
-        // Check if the book_id exists in the books table
-        $book = Book::find($payload->book_id);
-        if (!$book) {
-            return response()->json(['error' => 'Book not found'], 404);
+    try {
+        // Check if the book_id exists in the materials table
+        $material = Material::find($payload->book_id);
+        if (!$material) {
+            return response()->json(['error' => 'Material not found'], 404);
         }
 
-        // Check if the user already has a reservation with status 1 on the same book
-        $existingReservation = Reservation::where('book_id', $payload->book_id)
-        ->where('user_id', $payload->user_id)
-        ->whereHas('user', function ($query) {
-            $query->where('status', 1);
-        })
-        ->exists();
-
-        if ($existingReservation) {
-            return response()->json(['error' => 'User already has a reservation for this book'], 400);
+        // Check if the material status allows reservation
+        // Assuming status 0 means available for reservation
+        if ($material->status == 0) {
+            return response()->json(['error' => 'Material is not available for reservation'], 400);
         }
-    
-        // Create Reservation instance
-        $reservation = new reservation();
-        $reservation -> book_id = $payload->book_id;
-        $reservation -> user_id = $payload->user_id;
-        $reservation -> start_date = $payload->start_date;
-        $reservation -> end_date = $payload->end_date;
-        $reservation -> type = "walk-in";
-        // $reservation -> date_of_expiration= $payload->date_of_expiration;
-        $reservation -> save();
 
-        $data = ['Reservation' => $reservation];
+        // User and patron information
+        $user = User::find($payload->user_id);
+        if (!$user) {
+            return response()->json(['error' => 'User not found'], 404);
+        }
+
+        // Retrieve patron information if user has a patron_id
+        $patron = null;
+        if ($user->patron_id) {
+            $patron = Patron::find($user->patron_id);
+        }
+
+        if (!$patron) {
+            return response()->json(['error' => 'Patron not found'], 404);
+        }
+
+        // Number of materials allowed for this patron
+        $materialsAllowed = $patron->materials_allowed;
+
+        // Allowed number of active reservations
+        $activeReservationsCount = BorrowMaterial::where('user_id', $payload->user_id)
+                                            ->where('status', 1) // Assuming status 1 means active reservation
+                                            ->count();
+
+        if ($activeReservationsCount >= $materialsAllowed) {
+            return response()->json(['error' => 'User already has the maximum number of active reservations allowed'], 400);
+        }
+
+        // Use a transaction to ensure both operations happen at the same time
+        DB::beginTransaction();
+
+        // Create a new BorrowMaterial instance (reservation)
+        $reservation = new BorrowMaterial();
+        $reservation->book_id = $payload->book_id;
+        $reservation->user_id = $payload->user_id;
+        $reservation->reserve_date = now(); // Timestamp of reservation creation
+        $reservation->reserve_expiration = $payload->reserve_expiration; // Assuming reserve_expiration is provided
+        $reservation->fine = 0; // Initial fine set to 0 for reservation
+        $reservation->status = 1; // Status 1 for pending reservation
+
+        // Save the reservation record
+        $reservation->save();
+
+        // Update the material status to indicate it's reserved
+        $material->status = 2; // Update with appropriate status value
+        $material->save();
+
+        // Commit the transaction
+        DB::commit();
+
+        // Prepare and return the response data
+        $data = ['reservation' => $reservation];
         return response()->json($data);
+    } catch (Exception $e) {
+        // Rollback the transaction in case of an error
+        DB::rollBack();
+        return response()->json(['error' => 'An error occurred while processing the reservation', 'details' => $e->getMessage()], 500);
     }
+}
 
     // public function reservelist(Request $request){
     //     $reservelist = Reservation::with(['user.program', 'user.department', 'user.patron'])
@@ -104,7 +149,6 @@ class ReserveBookController extends Controller
         return response()->json($queueData);
     }
     
-
     public function queue(Request $request) {
         // Fetch all queue data from the reservations table
         $queueData = Reservation::orderBy('book_id')
@@ -140,8 +184,6 @@ class ReserveBookController extends Controller
         return response()->json($queueData);
     }
     
-    
-
     public function getQueuePosition(Request $request) {
         // Get the authenticated user's ID
         $userId = $request->user()->id;

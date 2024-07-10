@@ -26,7 +26,8 @@ class User extends Authenticatable
         'middle_name',
         'last_name',
         'ext_name',
-        'program_id'
+        'program_id',
+        'gender'
     ];
 
     /**
