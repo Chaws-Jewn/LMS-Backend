@@ -1,6 +1,7 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Circulation;
+use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\DB;
 use App\Models\BorrowMaterial;
 use App\Models\Reservation;
@@ -217,11 +218,6 @@ class BorrowMaterialController extends Controller
         $data = ['borrow_material' => $borrowMaterial];
         return response()->json($data);
     }   
-
-    public function userlist(Request $request){
-        $users = User::with('program.department', 'patron')->where('role', '["user"]')->get();
-        return response()->json($users, 200);
-    }
 
     public function borrowcount(Request $request, $id){
         $user = User::find($id);

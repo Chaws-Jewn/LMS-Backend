@@ -16,11 +16,6 @@ class BorrowMaterial extends Model
         'borrow_date',
         'borrow_expiration',
         'fine'
-
-
-
-
-        
         // 'name',
         // 'patron_type',
         // 'department',
