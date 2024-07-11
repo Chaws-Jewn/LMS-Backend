@@ -100,7 +100,7 @@ class ReserveBookController extends Controller
 
     public function reservelist(Request $request, $type = null) {
         // Fetch all reservation data from the reservations table
-        $reservelist = Reservation::with(['user.program.department', 'user.patron'])
+        $reservelist = BorrowMaterial::with(['user.program', 'user.patron'])
                         ->whereHas('user', function($query) {
                             $query->where('status', 1);
                         });
@@ -113,8 +113,8 @@ class ReserveBookController extends Controller
         
         // Include the id field along with other fields for queue data
         $queueData = $reservelist->orderBy('book_id')
-            ->orderBy('start_date', 'asc')
-            ->get(['id', 'user_id', 'book_id', 'start_date', 'status']);
+            ->orderBy('reserve_date', 'asc')
+            ->get(['id', 'user_id', 'book_id', 'reserve_date', 'status']);
     
         // Initialize an array to keep track of queue positions for each book
         $bookQueuePositions = [];

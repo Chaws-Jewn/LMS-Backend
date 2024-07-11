@@ -104,7 +104,7 @@ class BorrowMaterialController extends Controller
         $payload = json_decode($request->getContent());
 
         // Check if the accession exists in the materials table
-        $material = Material::find($payload->accession);
+        $material = Material::find($payload->book_id);
         if (!$material) {
             return response()->json(['error' => 'Material not found'], 404);
         }
@@ -171,7 +171,7 @@ class BorrowMaterialController extends Controller
         }
     }
     public function borrowlist(Request $request){
-        $borrowMaterial = BorrowMaterial::with('user.program.department', 'user.patron')
+        $borrowMaterial = BorrowMaterial::with('user.program', 'user.patron')
                             ->whereHas('user', function($query) {
                                 $query->where('status', 1);
                             })
