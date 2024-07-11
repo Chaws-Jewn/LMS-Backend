@@ -115,6 +115,7 @@ Route::group(['middleware' => ['auth:sanctum', 'ability:cataloging']], function 
 
         // PROCESSING OF MATERIALS
         Route::group(['prefix' => 'materials'], function() {
+            Route::post('books/import', [ExcelImportController::class, 'import']);
             Route::post('books/process', [BookController::class, 'add']);
             Route::post('periodicals/process', [PeriodicalController::class, 'add']);
             Route::post('articles/process', [ArticleController::class, 'add']);
@@ -148,8 +149,6 @@ Route::group(['middleware' => ['auth:sanctum', 'ability:cataloging']], function 
         Route::get('programs', [ProgramController::class, 'get']);
     });
 });
-
-Route::post('testexcel', [ExcelImportController::class, 'import']);
 
 // Circulation Process Routes
 Route::group(['middleware' => ['auth:sanctum', 'ability:circulation']], function () {

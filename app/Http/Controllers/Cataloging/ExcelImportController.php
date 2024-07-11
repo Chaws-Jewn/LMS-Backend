@@ -383,6 +383,6 @@ class ExcelImportController extends Controller
 
         return response()->json(['message' => 'File uploaded and data imported successfully.',
                                 'failed imports' => $results['failed'],
-                                'error message' => $errorText]);
+                                'error message' => $errorText], 200);
     }
 }
