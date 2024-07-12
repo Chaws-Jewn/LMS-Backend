@@ -231,19 +231,21 @@ class StudentMaterialController extends Controller
         return response()->json($projects);
     }
 
-    // Get projects by program
-    public function getProjectsByProgram($program) {
-        $projects = Project::where('program', $program)
-            ->orderByDesc('date_published')
-            ->get();
+ // Get projects by department_short
+public function getProjectsByProgram($departmentShort) {
+    $projects = Project::join('programs', 'academic_projects.program', '=', 'programs.program_short')
+        ->where('programs.department_short', $departmentShort)
+        ->orderByDesc('academic_projects.date_published')
+        ->select('academic_projects.*')
+        ->get();
 
-        foreach ($projects as $project) {
-            $this->processImageURL($project);
-            $this->decodeAuthors($project);
-        }
-
-        return response()->json($projects);
+    foreach ($projects as $project) {
+        $this->processImageURL($project);
+        $this->decodeAuthors($project);
     }
+
+    return response()->json($projects);
+}
 
     // Get projects by category
     public function getProjectsByCategory($category) {
@@ -257,6 +259,19 @@ class StudentMaterialController extends Controller
         }
 
         return response()->json($projects);
+    }
+    public function getProject($id){
+        $project = Project::select('accession', 'title', 'authors', 'program', 'image_url', 'language', 'keywords', 'abstract', 'date_published')
+                        ->with('project_program')
+                        ->findOrfail($id);
+
+        $project->authors = json_decode($project->authors);
+        $project->keywords = json_decode($project->keywords);
+
+        if ($project->image_url != null) {
+            $project->image_url = self::URL .  Storage::url($project->image_url);
+        }
+        return $project;
     }
 
     // Helper method to process image URL

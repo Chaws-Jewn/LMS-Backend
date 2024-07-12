@@ -7,6 +7,7 @@ use App\Http\Controllers\OPAC\OPACMaterialsController;
 use App\Http\Controllers\ProgramController;
 use App\Http\Controllers\StudentPortal\StudentSearchController;
 use App\Http\Controllers\StudentPortal\StudentViewController;
+use App\Http\Controllers\StudentPortal\StudentMaterialController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\ActivityLogController;
