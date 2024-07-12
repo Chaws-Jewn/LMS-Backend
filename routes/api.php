@@ -244,7 +244,7 @@ Route::group(['middleware' => ['auth:sanctum', 'ability:circulation']], function
             // For filtering material type
             Route::get('periodicals/type/{type}', [StudentMaterialController::class, 'getByType']);
             Route::get('articles/type/{type}', [StudentMaterialController::class, 'viewArticlesByType']);
-            Route::get('projects/type/{type}', [StudentMaterialController::class, 'getProjectsByCategory']);
+            Route::get('project/{category}/{department}', [StudentMaterialController::class, 'getProjectsByCategoryAndDepartment']);
             Route::get('periodicals/materialtype/{materialType}', [StudentMaterialController::class, 'getPeriodicalByPeriodicalType']);
     
             // Search 

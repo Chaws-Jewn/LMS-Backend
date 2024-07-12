@@ -248,30 +248,22 @@ public function getProjectsByProgram($departmentShort) {
 }
 
     // Get projects by category
-    public function getProjectsByCategory($category) {
+    public function getProjectsByCategoryAndDepartment($category, $departmentShort)
+    {
+        // Ensure $departmentShort is defined and accessible
+        // Example usage:
         $projects = Project::where('category', $category)
-            ->orderByDesc('date_published')
-            ->get();
-
-        foreach ($projects as $project) {
-            $this->processImageURL($project);
-            $this->decodeAuthors($project);
-        }
-
+                           ->whereHas('project_program', function ($query) use ($departmentShort) {
+                               $query->where('department_short', $departmentShort);
+                           })
+                           ->get();
+                           
+                           foreach ($projects as $project) {
+                            $this->processImageURL($project);
+                            $this->decodeAuthors($project);
+                        }
+                    
         return response()->json($projects);
-    }
-    public function getProject($id){
-        $project = Project::select('accession', 'title', 'authors', 'program', 'image_url', 'language', 'keywords', 'abstract', 'date_published')
-                        ->with('project_program')
-                        ->findOrfail($id);
-
-        $project->authors = json_decode($project->authors);
-        $project->keywords = json_decode($project->keywords);
-
-        if ($project->image_url != null) {
-            $project->image_url = self::URL .  Storage::url($project->image_url);
-        }
-        return $project;
     }
 
     // Helper method to process image URL
