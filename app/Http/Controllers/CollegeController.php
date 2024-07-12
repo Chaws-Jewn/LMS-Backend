@@ -12,7 +12,7 @@ class CollegeController extends Controller
     {   
         $departments = Program::select('program_short', 'program_full', 'department_full', 'department_short')
                         ->get()
-                        ->groupBy(['department_full', 'department_short']);
+                        ->groupBy('department_full');
 
         return $departments;
     }

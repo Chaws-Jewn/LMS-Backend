@@ -73,6 +73,19 @@ class OPACMaterialsController extends Controller
         return $articles;
     }
 
+    public function getAudiovisuals(){
+        $audiovisuals = Material::select('accession', 'title', 'authors', 'copyright')
+                            ->where('material_type', 3)
+                            ->orderBy('copyright', 'desc')
+                            ->get();
+                             
+        foreach($audiovisuals as $audiovisual) {
+            $audiovisual->authors = json_decode($audiovisual->authors);
+        }
+
+        return $audiovisuals;
+    }
+
     public function getMaterial($id) {
         $material = Material::findOrFail($id);
 

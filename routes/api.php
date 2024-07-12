@@ -221,56 +221,49 @@ Route::group(['middleware' => ['auth:sanctum', 'ability:circulation']], function
 
 /* STUDENT ROUTES */
 // Route::group(['middleware' => ['studentauth']], function () {
-Route::group(['middleware' => ['auth:sanctum', 'ability:user']], function () {
-
+    Route::group(['middleware' => ['auth:sanctum', 'ability:student']], function () { 
     Route::get('borrow/user/{userId}', [BorrowMaterialController::class, 'getByUserId']);
-
-    // ROUTES FOR VIEWING
-    Route::group(['prefix' => 'student/'], function () {
-        Route::get('announcements', [AnnouncementController::class, 'index']);
-
-        Route::get('books', [StudentViewController::class, 'viewBooks']);
-        Route::get('periodicals', [StudentViewController::class, 'viewPeriodicals']);
-        Route::get('projects', [StudentViewController::class, 'getProjects']);
-        Route::get('articles', [StudentViewController::class, 'viewArticles']);
-        Route::get('projects/department/{department}', [StudentViewController::class, 'getProjectCategoriesByDepartment']);//'viewProjectsByDepartment']);
-
-        // FOR SINGLE RECORD
-        Route::get('book/id/{id}', [StudentViewController::class, 'viewBook']);
-        Route::get('periodicals/id/{id}', [StudentViewController::class, 'getPeriodical']);
-        Route::get('article/id/{id}', [StudentViewController::class, 'viewArticle']);
-        Route::get('project/id/{id}', [StudentViewController::class, 'getProject']);//'viewProjectsByDepartment']);
-
-        // FOR FILTERING MATERIAL TYPE
-        Route::get('periodicals/type/{type}', [StudentViewController::class, 'viewPeriodicalByType']);
-        Route::get('articles/type/{type}', [StudentViewController::class, 'viewArticlesByType']);
-        Route::get('projects/type/{type}', [StudentViewController::class, 'viewProjectByType']);
-        Route::get('periodicals/materialtype/{materialType}', [StudentViewController::class, 'getPeriodicalByMaterialType']);
-
-        //Search
-        Route::get('books/search/', [StudentSearchController::class, 'searchBooks']);
-        Route::get('periodicals/search/', [StudentSearchController::class, 'searchPeriodicals']);
-        Route::get('articles/search/', [StudentSearchController::class, 'searchArticle']);
-        Route::get('projects/search/', [StudentSearchController::class, 'searchProjects']);
+    
+        // Routes for viewing 
+        Route::group(['prefix' => 'student/'], function () {
+            Route::get('announcements', [AnnouncementController::class, 'index']);
+    
+            Route::get('books', [StudentMaterialController::class, 'viewBooks']);
+            Route::get('periodicals', [StudentMaterialController::class, 'getPeriodicals']);
+            Route::get('projects', [StudentMaterialController::class, 'getProjects']);
+            Route::get('articles', [StudentMaterialController::class, 'viewArticles']);
+            Route::get('projects/department/{department}', [StudentMaterialController::class, 'getProjectsByProgram']);
+    
+            // For single record
+            Route::get('book/id/{id}', [StudentMaterialController::class, 'viewBook']);
+            Route::get('periodicals/id/{id}', [StudentMaterialController::class, 'getPeriodical']);
+            Route::get('article/id/{id}', [StudentMaterialController::class, 'viewArticle']);
+            Route::get('project/id/{id}', [StudentMaterialController::class, 'getProject']);
+    
+            // For filtering material type
+            Route::get('periodicals/type/{type}', [StudentMaterialController::class, 'getByType']);
+            Route::get('articles/type/{type}', [StudentMaterialController::class, 'viewArticlesByType']);
+            Route::get('projects/type/{type}', [StudentMaterialController::class, 'getProjectsByCategory']);
+            Route::get('periodicals/materialtype/{materialType}', [StudentMaterialController::class, 'getPeriodicalByPeriodicalType']);
+    
+            // Search 
+            Route::get('books/search/', [StudentMaterialController::class, 'searchBooks']);
+            Route::get('periodicals/search/', [StudentMaterialController::class, 'searchPeriodicals']);
+            Route::get('articles/search/', [StudentMaterialController::class, 'searchArticles']);
+            Route::get('projects/search/', [StudentMaterialController::class, 'searchProjects']);
+        });
+    
+        // Reservation routes
+        Route::post('reservations', [ReservationController::class, 'store']);
+        Route::delete('cancel-reservation/{id}', [ReservationController::class, 'cancelReservation']);
+        Route::get('students/queue-pos/{id}', [ReserveBookController::class, 'getQueuePosition']);
+        
+        Route::get('reservations/{id}', [ReservationController::class, 'getUserById']);
+        Route::delete('reservations/{reservation}', [ReservationController::class, 'destroy']);
+        Route::get('borrow/user/{userId}', [BorrowMaterialController::class, 'getByUserId']);
+            
+        Route::get('queue-pos/{id}', [ReserveBookController::class, 'getQueuePosition']);   
     });
-
-    // Reservation routes
-    Route::post('reservations', [ReservationController::class, 'store']); // Changed from 'reservation/{id}' to 'reservations'
-    // Reservation Cancel
-    Route::delete('/cancel-reservation/{id}', [ReservationController::class, 'cancelReservation']);
-    Route::get('students/queue-pos/{id}', [ReserveBookController::class, 'getQueuePosition']);
-
-    // API resource route for reservations
-    Route::get('reservations/{id}', [ReservationController::class, 'getUserById']);
-    Route::delete('reservations/{reservation}', [ReservationController::class, 'destroy']);
-    Route::get('borrow/user/{userId}', [BorrowMaterialController::class, 'getByUserId']);
-
-    Route::get('reservations/{id}', [ReservationController::class, 'getUserById']);
-    Route::delete('reservations/{reservation}', [ReservationController::class, 'destroy']);
-    Route::get('borrow/user/{userId}', [BorrowMaterialController::class, 'getByUserId']);
-
-    Route::get('queue-pos/{id}', [ReserveBookController::class, 'getQueuePosition']);
-});
 
 // RED ZONE
 Route::group(['middleware' => ['auth:sanctum', 'ability:cataloging']], function () {
@@ -284,6 +277,7 @@ Route::group(['prefix' => 'opac'], function () {
     Route::get('books', [OPACMaterialsController::class, 'getBooks']);
     Route::get('/periodicals/{material_type}', [OPACMaterialsController::class, 'getPeriodicals']);
     Route::get('/articles', [OPACMaterialsController::class, 'getArticles']);
+    Route::get('/audiovisuals', [OPACMaterialsController::class, 'getAudiovisuals']);
 
     Route::get('/material/{id}', [OPACMaterialsController::class, 'getMaterial']);
 
