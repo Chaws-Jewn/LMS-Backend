@@ -8,6 +8,7 @@ use App\Models\Project;
 use Exception, DB, Storage, Str;
 use App\Http\Controllers\Controller;
 use App\Http\Controllers\ImageController;
+use App\Http\Controllers\ActivityLogController;
 
 class ProjectController extends Controller
 {
@@ -141,6 +142,20 @@ class ProjectController extends Controller
         $model->authors = json_encode($authors);
         
         $model->save();
+        
+        $log = new ActivityLogController();
+
+        $logParam = new \stdClass(); // Instantiate stdClass
+
+        $user = $request->user();
+
+        $logParam->system = 'Cataloging';
+        $logParam->username = $user->username;
+        $logParam->fullname = $user->first_name . ' ' . $user->middle_name . ' ' . $user->last_name . ' ' . $user->ext_name;
+        $logParam->position = $user->position;
+        $logParam->desc = 'Added project of accession ' . $model->accession;
+
+        $log->savePersonnelLog($logParam);
 
         return response()->json($model, 201);
     }
@@ -193,13 +208,28 @@ class ProjectController extends Controller
         
         $model->save();
 
+        $log = new ActivityLogController();
+
+        $logParam = new \stdClass(); // Instantiate stdClass
+
+        $user = $request->user();
+
+        $logParam->system = 'Cataloging';
+        $logParam->username = $user->username;
+        $logParam->fullname = $user->first_name . ' ' . $user->middle_name . ' ' . $user->last_name . ' ' . $user->ext_name;
+        $logParam->position = $user->position;
+        $logParam->desc = 'Updated project of accession ' . $model->accession;
+
+        $log->savePersonnelLog($logParam);
+
         return response()->json($model, 200);
     }
 
     public function archive(Request $request, $id) {
-        DB::transaction(function () use ($id) {
-            $model = Project::findOrFail($id);
+        
+        $model = Project::findOrFail($id);
 
+        DB::transaction(function () use ($model, $id) {
             DB::connection('archives')->table('academic_projects')->insert([
                 'accession' => $model->accession,
                 'category' => $model->category,
@@ -217,6 +247,21 @@ class ProjectController extends Controller
             
             $model->delete();
         });
+
+        
+        $log = new ActivityLogController();
+
+        $logParam = new \stdClass(); // Instantiate stdClass
+
+        $user = $request->user();
+
+        $logParam->system = 'Cataloging';
+        $logParam->username = $user->username;
+        $logParam->fullname = $user->first_name . ' ' . $user->middle_name . ' ' . $user->last_name . ' ' . $user->ext_name;
+        $logParam->position = $user->position;
+        $logParam->desc = 'Archived project of accession ' . $id;
+
+        $log->savePersonnelLog($logParam);
 
         return response()->json(['Response' => 'Record archived successfully'], 200);
     }

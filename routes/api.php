@@ -11,6 +11,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\ActivityLogController;
 use App\Http\Controllers\Cataloging\AVController;
+use App\Http\Controllers\AnalyticsController;
 
 use App\Http\Controllers\AuthController, App\Http\Controllers\CatalogingLogController, App\Http\Controllers\Cataloging\ArticleController,
 App\Http\Controllers\Cataloging\BookController, App\Http\Controllers\Cataloging\PeriodicalController, App\Http\Controllers\Cataloging\ProjectController,
@@ -96,6 +97,28 @@ Route::middleware(['auth:sanctum', 'ability:maintenance'])->group(function () {
     Route::get('/departmentsWithPrograms',[CollegeController::class, 'getDepartmentsWithPrograms']);
     Route::get('/departments',[CollegeController::class, 'getDepartments']);
     Route::post('/add-department',[CollegeController::class, 'addCollege']);
+
+    Route::prefix('analytics')->group(function() {
+        //Analytics Api
+        Route::get('/total-lockers', [AnalyticsController::class, 'getTotalLockers']);
+        Route::get('/total-active-users', [AnalyticsController::class, 'getTotalActiveUsers']);
+        Route::get('/total-users-per-department', [AnalyticsController::class, 'getTotalUsersPerDepartment']);
+        Route::get('/total-materials', [AnalyticsController::class, 'getTotalMaterials']);
+        Route::get('/total-projects', [AnalyticsController::class, 'getTotalProjects']);
+        Route::get('/total-borrowed', [AnalyticsController::class, 'getTotalBorrowed']);
+        Route::get('/available-books', [AnalyticsController::class, 'getAvailableBooks']);
+        Route::get('/unreturned-books', [AnalyticsController::class, 'getUnreturnedBooks']);
+        Route::get('/missing-books', [AnalyticsController::class, 'getMissingBooks']);
+        Route::get('/most-borrowed-books', [AnalyticsController::class, 'mostBorrowedBooks']);
+        Route::get('/most-borrowed-books-by-department', [AnalyticsController::class, 'mostBorrowedBooksByDepartment']);
+        Route::get('/top-borrowers', [AnalyticsController::class, 'topBorrowers']);
+        Route::get('/total-unavailable-books', [AnalyticsController::class, 'totalUnavailableBooks']);
+        Route::get('/total-occupied-books', [AnalyticsController::class, 'totalOccupiedBooks']);
+        Route::get('/total-periodicals', [AnalyticsController::class, 'getTotalPeriodicals']);
+        Route::get('/total-articles', [AnalyticsController::class, 'getTotalArticles']);
+        Route::get('/total-projects-by-department', [AnalyticsController::class, 'getTotalProjectsByDepartment']);
+        Route::get('/locker-visits', [AnalyticsController::class, 'getLockerVisits']);
+    });
 });
 
 // Cataloging Process routes
@@ -240,7 +263,7 @@ Route::group(['middleware' => ['auth:sanctum', 'ability:user']], function () {
     // API resource route for reservations
     Route::get('reservations/{id}', [ReservationController::class, 'getUserById']);
     Route::delete('reservations/{reservation}', [ReservationController::class, 'destroy']);
-    Route::get('borrow/user/{userId}', [BorrowMaterialController::Class, 'getByUserId']);
+    Route::get('borrow/user/{userId}', [BorrowMaterialController::class, 'getByUserId']);
 
     Route::get('reservations/{id}', [ReservationController::class, 'getUserById']);
     Route::delete('reservations/{reservation}', [ReservationController::class, 'destroy']);
