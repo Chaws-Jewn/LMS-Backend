@@ -261,6 +261,7 @@ Route::group(['prefix' => 'opac'], function () {
     Route::get('books', [OPACMaterialsController::class, 'getBooks']);
     Route::get('/periodicals/{material_type}', [OPACMaterialsController::class, 'getPeriodicals']);
     Route::get('/articles', [OPACMaterialsController::class, 'getArticles']);
+    Route::get('/audiovisuals', [OPACMaterialsController::class, 'getAudiovisuals']);
 
     Route::get('/material/{id}', [OPACMaterialsController::class, 'getMaterial']);
 
