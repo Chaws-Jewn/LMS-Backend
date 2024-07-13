@@ -8,6 +8,7 @@ use App\Http\Controllers\ProgramController;
 use App\Http\Controllers\StudentPortal\StudentSearchController;
 use App\Http\Controllers\StudentPortal\StudentViewController;
 use App\Http\Controllers\StudentPortal\StudentMaterialController;
+use App\Http\Controllers\StudentPortal\StudentReservationController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\ActivityLogController;
@@ -262,7 +263,10 @@ Route::group(['middleware' => ['auth:sanctum', 'ability:circulation']], function
         Route::delete('reservations/{reservation}', [ReservationController::class, 'destroy']);
         Route::get('borrow/user/{userId}', [BorrowMaterialController::class, 'getByUserId']);
             
-        Route::get('queue-pos/{id}', [ReserveBookController::class, 'getQueuePosition']);   
+        Route::get('queue-pos/{id}', [ReserveBookController::class, 'getQueuePosition']);  
+        
+         //new reservation for student 
+         Route::post('newreservations', [StudentReservationController::class, 'reservebook']);
     });
 
 // RED ZONE
