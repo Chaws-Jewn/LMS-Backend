@@ -95,9 +95,8 @@ Route::middleware(['auth:sanctum', 'ability:maintenance'])->group(function () {
 
     // DEPARTMENT
     Route::post('/add-program',[ProgramController::class, 'addProgram']);
-    Route::get('/departmentsWithPrograms',[CollegeController::class, 'getDepartmentsWithPrograms']);
     Route::get('/departments',[CollegeController::class, 'getDepartments']);
-    Route::post('/add-department',[CollegeController::class, 'addCollege']);
+    Route::post('/add-department',[CollegeController::class, 'addDepartment']);
 
     Route::prefix('analytics')->group(function() {
         //Analytics Api

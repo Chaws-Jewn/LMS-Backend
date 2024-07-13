@@ -8,36 +8,46 @@ use Illuminate\Support\Facades\Validator;
 
 class CollegeController extends Controller
 {
-    public function getDepartmentsWithPrograms()
-    {   
-        $departments = Program::select('program_short', 'program_full', 'department_full', 'department_short')
+    public function getDepartments() {
+        $departmentsWithPrograms = Program::select('program_short', 'program_full', 'department_full', 'department_short')
                         ->get()
                         ->groupBy('department_full');
 
-        return $departments;
-    }
-
-    public function getDepartments() {
         $departments = Program::select('department_full', 'department_short')
                         ->groupBy(['department_full', 'department_short'])
                         ->get();
 
-        return $departments;
+        return response()->json(['departments_only' => $departments, 'departments_with_programs' => $departmentsWithPrograms], 200);
     }
     // Add a new college
-    public function addCollege(Request $request)
+    public function addDepartment(Request $request)
     {
         $data = Validator::make($request->all(), [
-            'department' => 'required|string|max:10|unique:departments',
-            'full_department' => 'required|string|max:255'
+            'department_short' => 'required|string|max:10|unique:programs',
+            'department_full' => 'required|string|max:100',
+            'programs' => 'required|array',
+            'programs.*.program_short' => 'required|string|max:10|unique:programs',
+            'programs.*.program_full' => 'required|string|max:100',
+            'programs.*.category' => 'required|string|max:32'
         ]);
 
         if($data->fails()) {
             return response()->json(['error' => $data->errors()], 422);
         }
 
-        $department = Department::create($data->validated());
+        $validatedData = $data->validated();
 
-        return response()->json(['message' => 'College added successfully!', 'department' => $department], 201);
+        foreach($validatedData['programs'] as $program) {
+            Program::create([
+                'program_short' => $program['program_short'],
+                'program_full' => $program['program_full'],
+                'category' => $program['category'],
+                'department_short' => $validatedData['department_short'],
+                'department_full' => $validatedData['department_full'],
+            ]);
+
+        }
+
+        return response()->json(['success' => 'College added successfully!'], 201);
     }
 }
