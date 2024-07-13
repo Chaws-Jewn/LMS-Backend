@@ -166,7 +166,7 @@ Route::group(['middleware' => ['auth:sanctum', 'ability:circulation']], function
     // update borrow list
     Route::put('/circulation/borrow-edit/{id}',[BorrowMaterialController:: class, 'borrowEdit']);
 
-    // borrow-list returning book
+    // borrow-list returning book from borrowed list
     Route::put('circulation/return-book/{id}', [BorrowMaterialController::class, 'returnbook']);
 
     //returned book list
@@ -178,7 +178,7 @@ Route::group(['middleware' => ['auth:sanctum', 'ability:circulation']], function
 
     //reservationlist
     Route::get('/circulation/reservation-list/{type}', [ReserveBookController::class, 'reservelist']);
-
+    Route::get('/circulation/reservelist', [ReserveBookController::class, 'allreserve']);
     Route::get('/circulation/queue', [ReserveBookController::class, 'queue']);
 
     //borrow book

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Circulation;
 use Illuminate\Support\Facades\DB;
 use App\Http\Controllers\Controller;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Http\Request;
 use App\Http\Controllers\BorrowMaterialController;
 //use App\Models\Reservation;
@@ -10,142 +11,164 @@ use App\Models\BorrowMaterial;
 use App\Models\User;
 use App\Models\Material;
 use App\Models\Patron;
+use App\Models\Program;
 use Exception;
 use Storage;
 
 class ReserveBookController extends Controller
 {
     public function reservebook(Request $request)
-{
-    // Decode the JSON payload from the request body
-    $payload = json_decode($request->getContent());
-
-    try {
-        // Check if the book_id exists in the materials table
-        $material = Material::find($payload->book_id);
-        if (!$material) {
-            return response()->json(['error' => 'Material not found'], 404);
-        }
-
-        // Check if the material status allows reservation
-        if ($material->status == 0) {
-            return response()->json(['error' => 'Book is currently borrowed'], 400);
-        }
-
-
-        if ($material->status == 3) {
-            return response()->json(['error' => 'Book has not been returned'], 400);
-        }
-
-        // User and patron information
-        $user = User::find($payload->user_id);
-        if (!$user) {
-            return response()->json(['error' => 'User not found'], 404);
-        }
-
-        // Retrieve patron information if user has a patron_id
-        $patron = null;
-        if ($user->patron_id) {
-            $patron = Patron::find($user->patron_id);
-        }
-
-        if (!$patron) {
-            return response()->json(['error' => 'Patron not found'], 404);
-        }
-
-        // Number of materials allowed for this patron
-        $materialsAllowed = $patron->materials_allowed;
-
-        // Allowed number of active reservations
-        $activeReservationsCount = BorrowMaterial::where('user_id', $payload->user_id)
-                                            ->where('status', 0) // Assuming status 1 means active reservation
-                                            ->count();
-
-        if ($activeReservationsCount >= $materialsAllowed) {
-            return response()->json(['error' => 'User already has the maximum number of active reservations allowed'], 400);
-        }
-
-        // Use a transaction to ensure both operations happen at the same time
-        DB::beginTransaction();
-
-        // Create a new BorrowMaterial instance (reservation)
-        $reservation = new BorrowMaterial();
-        $reservation->book_id = $payload->book_id;
-        $reservation->user_id = $payload->user_id;
-        $reservation->reserve_date = now(); // Timestamp of reservation creation
-        $reservation->reserve_expiration = $payload->reserve_expiration;
-        $reservation->fine = 0; // Initial fine set to 0 for reservation
-        $reservation->reservation_type = 1; //assuming 1 is walk-in
-        $reservation->status = 1; // Status 1 for pending reservation
-
-        // Save the reservation record
-        $reservation->save();
-
-        // Update the material status to indicate it's reserved
-        $material->status = 2; // Update with appropriate status value
-        $material->save();
-
-        // Commit the transaction
-        DB::commit();
-
-        // Prepare and return the response data
-        $data = ['reservation' => $reservation];
-        return response()->json($data);
-    } catch (Exception $e) {
-        // Rollback the transaction in case of an error
-        DB::rollBack();
-        return response()->json(['error' => 'An error occurred while processing the reservation', 'details' => $e->getMessage()], 500);
-    }
-}
-
-    public function reservelist(Request $request, $type = null) {
-        // Fetch all reservation data from the reservations table
-        $reservelist = Reservation::with(['user.program.department', 'user.patron'])
-                        ->whereHas('user', function($query) {
-                            $query->where('status', 1);
-                        });
+    {
+        $payload = $request->all();
+        $logMessages = [];
+        $logMessages[] = 'Received payload: ' . json_encode($payload);
+        Log::info('Received payload:', $payload);
     
-        if ($type === 'online') {
-            $reservelist->where('type', 'online');
-        } elseif ($type === 'walk-in') {
-            $reservelist->where('type', 'walk-in');
+        // Check if the required fields are present
+        $requiredFields = ['book_id', 'user_id', 'reserve_expiration'];
+        foreach ($requiredFields as $field) {
+            if (!isset($payload[$field])) {
+                return response()->json(['error' => 'Missing required field: ' . $field, 'logMessages' => $logMessages], 400);
+            }
         }
-        
-        // Include the id field along with other fields for queue data
-        $queueData = $reservelist->orderBy('book_id')
-            ->orderBy('start_date', 'asc')
-            ->get(['id', 'user_id', 'book_id', 'start_date', 'status']);
     
-        // Initialize an array to keep track of queue positions for each book
-        $bookQueuePositions = [];
-    
-        // Iterate through each reservation to calculate queue positions
-        foreach ($queueData as $reservation) {
-            // Check if reservation status is 0 (not active)
-            if ($reservation->status == 0) {
-                continue; // Skip reservations with status 0
+        try {
+            // Check if the book_id exists in the materials table
+            $material = Material::find($payload['book_id']);
+            if (!$material) {
+                return response()->json(['error' => 'Material not found'], 404);
             }
     
+            // Check if the material status allows reservation
+            if ($material->status == 0) {
+                return response()->json(['error' => 'Book is currently borrowed'], 400);
+            }
+    
+            if ($material->status == 3) {
+                return response()->json(['error' => 'Book has not been returned'], 400);
+            }
+    
+            // User and patron information
+            $user = User::find($payload['user_id']);
+            if (!$user) {
+                return response()->json(['error' => 'User not found'], 404);
+            }
+    
+            $patron = Patron::find($user->patron_id);
+            if (!$patron) {
+                return response()->json(['error' => 'Patron not found'], 404);
+            }
+    
+            // Number of materials allowed for this patron
+            $materialsAllowed = $patron->materials_allowed;
+    
+            // Allowed number of active reservations
+            $activeReservationsCount = BorrowMaterial::where('user_id', $payload['user_id'])
+                                                    ->where('status', 1) // 1 means active reservation
+                                                    ->count();
+    
+            if ($activeReservationsCount >= $materialsAllowed) {
+                return response()->json(['error' => 'User already has the maximum number of active reservations allowed'], 400);
+            }
+    
+            // Use a transaction to ensure both operations happen at the same time
+            DB::beginTransaction();
+            try {
+                // Create a new BorrowMaterial instance (reservation)
+                $reservation = new BorrowMaterial();
+                $reservation->book_id = $payload['book_id'];
+                $reservation->user_id = $payload['user_id'];
+                $reservation->reserve_date = now(); // Timestamp of reservation creation
+                $reservation->reserve_expiration = $payload['reserve_expiration'];
+                $reservation->fine = 0; // Initial fine set to 0 for reservation
+                $reservation->reservation_type = 1; // Assuming 1 is walk-in
+                $reservation->status = 1; // Status 1 for active reservation
+                $reservation->save();
+    
+                // Update the material status to indicate it's reserved
+                $material->status = 2; // Update with appropriate status value
+                $material->save();
+    
+                // Commit the transaction
+                DB::commit();
+    
+                // Prepare and return the response data
+                $data = ['reservation' => $reservation];
+                return response()->json($data);
+            } catch (Exception $e) {
+                // Rollback the transaction in case of an error
+                DB::rollBack();
+                return response()->json(['error' => 'An error occurred while processing the reservation', 'details' => $e->getMessage()], 500);
+            }
+        } catch (Exception $e) {
+            return response()->json(['error' => 'An error occurred while processing the reservation', 'details' => $e->getMessage()], 500);
+        }
+    }
+
+    //new reservation list getting all
+    public function allreserve(Request $request)
+    {
+        // Fetch all reservation data from the borrow_materials table
+        $reservelist = BorrowMaterial::with(['user', 'user.patron', 'material'])
+                        ->whereIn('reservation_type', [0, 1])
+                        ->where('status', '!=', 0)
+                        ->orderBy('book_id')
+                        ->orderBy('reserve_date', 'asc')
+                        ->get();
+
+        // Initialize an array to keep track of queue positions for each book
+        $bookQueuePositions = [];
+
+        // Iterate through each reservation to calculate queue positions and update status
+        foreach ($reservelist as $reservation) {
             // Get the book ID
             $bookId = $reservation->book_id;
-    
+
             // If the book ID is not yet in the bookQueuePositions array, initialize its queue position to 1
             if (!isset($bookQueuePositions[$bookId])) {
                 $bookQueuePositions[$bookId] = 1;
             }
-    
+
             // Set the queue position for the current reservation
             $reservation->queue_position = $bookQueuePositions[$bookId];
-    
-            // Increment the queue position for the next reservation
+
+            // Set status label based on status value
+            switch ($reservation->status) {
+                case 1:
+                    $reservation->status_label = "Pending Reservation";
+                    break;
+                case 2:
+                    $reservation->status_label = "N/A";
+                    break;
+                default:
+                    $reservation->status_label = "Unknown";
+                    break;
+            }
+
+            // Increment the queue position for the next reservation of the same book
             $bookQueuePositions[$bookId]++;
         }
-    
+
         // Return the combined result as JSON
-        return response()->json($queueData);
+        return response()->json($reservelist->map(function ($reservation) {
+            return [
+                'id' => $reservation->id,
+                'user_id' => $reservation->user_id,
+                'first_name' => $reservation->user->first_name,
+                'book_id' => $reservation->book_id,
+                'title' => $reservation->material->title,
+                'reserve_date' => $reservation->reserve_date,
+                'queue_position' => $reservation->queue_position,
+                'status_label' => $reservation->status_label,
+                'mode_of_reservation' => $reservation->reservation_type == 1 ? 'face to face' : 'online',
+                'department' => $reservation->user->program,
+                // Include other fields as needed
+            ];
+        }));
     }
     
-    public function queue(Request $request) {
+    public function queue(Request $request) 
+    {
         // Fetch all queue data from the reservations table
         $queueData = Reservation::orderBy('book_id')
             ->orderBy('start_date', 'asc')
@@ -180,7 +203,8 @@ class ReserveBookController extends Controller
         return response()->json($queueData);
     }
     
-    public function getQueuePosition(Request $request) {
+    public function getQueuePosition(Request $request) 
+    {
         // Get the authenticated user's ID
         $userId = $request->user()->id;
     
@@ -210,7 +234,8 @@ class ReserveBookController extends Controller
         return response()->json($queuePositions);
     }
 
-    public function destroy ($id){
+    public function destroy ($id)
+    {
         // Find the reservation by ID
         $reservation = Reservation::find($id);
 
@@ -290,3 +315,51 @@ class ReserveBookController extends Controller
     //                     ->get();
     //     return response()->json($reservelist);
     // }
+
+    // public function reservelist(Request $request, $type = null) {
+    //     // Fetch all reservation data from the reservations table
+    //     $reservelist = Reservation::with(['user.program.department', 'user.patron'])
+    //                     ->whereHas('user', function($query) {
+    //                         $query->where('status', 1);
+    //                     });
+    
+    //     if ($type === 'online') {
+    //         $reservelist->where('type', 'online');
+    //     } elseif ($type === 'walk-in') {
+    //         $reservelist->where('type', 'walk-in');
+    //     }
+        
+    //     // Include the id field along with other fields for queue data
+    //     $queueData = $reservelist->orderBy('book_id')
+    //         ->orderBy('start_date', 'asc')
+    //         ->get(['id', 'user_id', 'book_id', 'start_date', 'status']);
+    
+    //     // Initialize an array to keep track of queue positions for each book
+    //     $bookQueuePositions = [];
+    
+    //     // Iterate through each reservation to calculate queue positions
+    //     foreach ($queueData as $reservation) {
+    //         // Check if reservation status is 0 (not active)
+    //         if ($reservation->status == 0) {
+    //             continue; // Skip reservations with status 0
+    //         }
+    
+    //         // Get the book ID
+    //         $bookId = $reservation->book_id;
+    
+    //         // If the book ID is not yet in the bookQueuePositions array, initialize its queue position to 1
+    //         if (!isset($bookQueuePositions[$bookId])) {
+    //             $bookQueuePositions[$bookId] = 1;
+    //         }
+    
+    //         // Set the queue position for the current reservation
+    //         $reservation->queue_position = $bookQueuePositions[$bookId];
+    
+    //         // Increment the queue position for the next reservation
+    //         $bookQueuePositions[$bookId]++;
+    //     }
+    
+    //     // Return the combined result as JSON
+    //     return response()->json($queueData);
+    // }
+    

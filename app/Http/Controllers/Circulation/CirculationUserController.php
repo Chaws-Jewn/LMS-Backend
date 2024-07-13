@@ -4,14 +4,24 @@ namespace App\Http\Controllers\Circulation;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\User;
+use App\Models\Program;
 use App\Models\Material;
 
 
 class CirculationUserController extends Controller
 {   
     public function userlist(Request $request){
-        $users = User::with( 'patron')->where('role', '["user"]')->get();
-        return response()->json($users, 200);
+        $users = User::with( 'patron')->whereJsonContains('role', 'student')->get();
+        return response()->json($users->map(function($users){
+            return[
+                'id' => $users->id,
+                'fname' => $users->first_name,
+                'lname' => $users->last_name,
+                'gender' => $users->gender == 1 ? 'male' : 'female',
+                'email' => $users->domain_email,
+                'department' => $users->program,
+            ];
+        }));
     }
     public function getUser(Request $request, int $id) {
         return User::with('program', 'patron')->findOrFail($id);

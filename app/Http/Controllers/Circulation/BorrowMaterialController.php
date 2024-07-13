@@ -8,6 +8,7 @@ use App\Models\BorrowMaterial;
 use App\Models\Reservation;
 use Illuminate\Http\Request;
 use App\Models\User;
+use App\Models\Program;
 use App\Models\Patron;
 use App\Models\Material;
 use Exception, Carbon, Storage;
@@ -101,91 +102,126 @@ class BorrowMaterialController extends Controller
     }
     public function fromreservation(Request $request, $id)
     {
-        $payload = json_decode($request->getContent());
+        $payload = $request->all(); 
+        $logMessages = [];
+        $logMessages[] = 'Received payload: ' . json_encode($payload);
+        Log::info('Received payload:', $payload);
+        // Check if the required fields are present
+        $requiredFields = ['book_id', 'user_id',];
+        foreach ($requiredFields as $field) {
+            if (!isset($payload[$field])) {
+                return response()->json(['error' => 'Missing required field: ' . $field, 'logMessages' => $logMessages], 400);
+            }
+        }
 
-        // Check if the accession exists in the materials table
-        $material = Material::find($payload->accession);
+        // Check if the book_id exists in the materials table
+        $material = Material::find($payload['book_id']);
         if (!$material) {
-            return response()->json(['error' => 'Material not found'], 404);
+            return response()->json(['error' => 'Book not found'], 404);
         }
 
-        // Check if the material status allows borrowing
-        if ($material->status !== 1) {
-            return response()->json(['error' => 'Material is not available for borrowing'], 400);
-        }
+            // Check if the material status allows borrowing
+            if ($material->status !== 1 && $material->status !== 2 ) {
+                return response()->json(['error' => 'Book is currently borrowed or not available'], 400);
+            }
 
-        // Find the reservation
-        $reservation = Reservation::find($id);
-        if (!$reservation) {
-            return response()->json(['error' => 'Reservation not found'], 404);
-        }
-
-        // Find the user
-        $user = User::find($payload->user_id);
+        // User and patron information
+        $user = User::find($payload['user_id']);
         if (!$user) {
             return response()->json(['error' => 'User not found'], 404);
         }
-
-        // Get the patron ID associated with the user
-        $patronId = $user->patron_id;
-
-        // Retrieve the patron from the patrons table
-        $patron = Patron::find($patronId);
+        $patron = Patron::find($user['patron_id']);
         if (!$patron) {
-            return response()->json(['error' => 'Patron not found for the user'], 404);
+            return response()->json(['error' => 'Patron not found'], 404);
         }
 
-        // Get the fine associated with the patron
-        $fine = $patron->fine ?? 0;
+        // Number of materials allowed for this patron
+        $materialsAllowed = $patron->materials_allowed;
+
+        // Allowed number of active borrows
+        $activeBorrowsCount = BorrowMaterial::where('user_id', $payload['user_id'])
+                                            ->where('status', 1) // Assuming status 1 means active
+                                            ->count();
+
+        if ($activeBorrowsCount >= $materialsAllowed) {
+            return response()->json(['error' => 'User already has the maximum number of active borrows allowed'], 400);
+        }
 
         // Use a transaction to ensure both operations happen at the same time
         DB::beginTransaction();
         try {
             // Create a new BorrowMaterial instance
             $borrowMaterial = new BorrowMaterial();
-            $borrowMaterial->user_id = $payload->user_id;
-            $borrowMaterial->accession = $payload->accession;
-            $borrowMaterial->fine = $fine;
-            $borrowMaterial->borrow_date = now();
+            $borrowMaterial->book_id = $payload['book_id'];
+            $borrowMaterial->user_id = $payload['user_id'];
+            $borrowMaterial->fine = 0;
             $borrowMaterial->borrow_expiration = now()->addWeek();
+            $borrowMaterial->borrow_date = now();
             $borrowMaterial->status = 1; // Assuming status 1 means active
             $borrowMaterial->save();
 
             // Update the material status
-            $material->status = 'borrowed'; // Update with appropriate status value
+            $material->status = 0; // Update with appropriate status value
             $material->save();
-
-            // Update reservation status
-            $reservation->status = 0; // Assuming status 0 means completed or canceled
-            $reservation->save();
 
             // Commit the transaction
             DB::commit();
 
             $data = ['borrow_material' => $borrowMaterial];
             return response()->json($data);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             // Rollback the transaction in case of an error
             DB::rollBack();
-            return response()->json(['error' => 'An error occurred while processing the reservation', 'details' => $e->getMessage()], 500);
+            return response()->json(['error' => 'An error occurred while borrowing the material', 'details' => $e->getMessage()], 500);
         }
     }
-    public function borrowlist(Request $request){
-        $borrowMaterial = BorrowMaterial::with('user.program.department', 'user.patron')
-                            ->whereHas('user', function($query) {
-                                $query->where('status', 1);
-                            })
-                            ->get();
-        return response()->json($borrowMaterial); 
-    }
+        
+    public function borrowlist(Request $request)
+{
+    $borrowMaterial = BorrowMaterial::with('user', 'user.patron')
+                        ->whereHas('user', function($query) {
+                            $query->where('status', 1);
+                        })
+                        ->whereNull('reservation_type')
+                        ->whereNotNull('borrow_date')
+                        ->get();
+
+    return response()->json($borrowMaterial->map(function($borrowMaterial){
+        return[
+            'id' => $borrowMaterial->id,
+            'name' => $borrowMaterial->user->last_name,
+            'email' => $borrowMaterial->user->domain_email,
+            'department' => $borrowMaterial->user->program,
+            // 'program' => $borrowMaterial->program->department,
+            'title' => $borrowMaterial->material->title,
+            'status' => $borrowMaterial->status,
+            'fine' => $borrowMaterial->fine,
+        ];
+    }));
+}
 
     public function returnedlist(Request $request){
-        $borrowMaterial = BorrowMaterial::with(['user.program', 'user.department', 'user.patron'])
+        $borrowMaterial = BorrowMaterial::with(['user', 'user.patron'])
                             ->whereHas('user', function($query){
                                 $query->where('status', 0);
                             })
+                            ->whereNotNull('date_returned')
                             ->get();
-        return response()->json($borrowMaterial);
+        return response()->json($borrowMaterial->map(function($borrowMaterial){
+            return[
+                'id' => $borrowMaterial->id,
+                'fname' => $borrowMaterial->user->first_name,
+                'lname' => $borrowMaterial->user->last_name,
+                'email' => $borrowMaterial->user->domain_email,
+                'department' => $borrowMaterial->user->program,
+                'date_borrowed' => $borrowMaterial->borrow_date,
+                'date_returned' => $borrowMaterial->date_returned,
+                // 'program' => $borrowMaterial->program->department,
+                'title' => $borrowMaterial->material->title,
+                'status' => $borrowMaterial->status,
+                'fine' => $borrowMaterial->fine,
+            ];
+        }));
     }
 
     public function returnedlistid($id)
@@ -411,63 +447,72 @@ class BorrowMaterialController extends Controller
     }
 }
 
-//book is borrowed from reservation
-// public function fromreservation(Request $request, $id)
-// {
-//     $payload = json_decode($request->payload);
-    
-//     // Check if the book_id exists in the books table
-//     $book = Book::find($payload->book_id);
-//     if (!$book) {
-//         return response()->json(['error' => 'Book not found'], 404);
+// $payload = json_decode($request->getContent());
+
+//         // Check if the accession exists in the materials table
+//         $material = Material::find($payload->accession);
+//         if (!$material) {
+//             return response()->json(['error' => 'Material not found'], 404);
+//         }
+
+//         // Check if the material status allows borrowing
+//         if ($material->status !== 1) {
+//             return response()->json(['error' => 'Material is not available for borrowing'], 400);
+//         }
+
+//         // Find the reservation
+//         $reservation = Reservation::find($id);
+//         if (!$reservation) {
+//             return response()->json(['error' => 'Reservation not found'], 404);
+//         }
+
+//         // Find the user
+//         $user = User::find($payload->user_id);
+//         if (!$user) {
+//             return response()->json(['error' => 'User not found'], 404);
+//         }
+
+//         // Get the patron ID associated with the user
+//         $patronId = $user->patron_id;
+
+//         // Retrieve the patron from the patrons table
+//         $patron = Patron::find($patronId);
+//         if (!$patron) {
+//             return response()->json(['error' => 'Patron not found for the user'], 404);
+//         }
+
+//         // Get the fine associated with the patron
+//         $fine = $patron->fine ?? 0;
+
+//         // Use a transaction to ensure both operations happen at the same time
+//         DB::beginTransaction();
+//         try {
+//             // Create a new BorrowMaterial instance
+//             $borrowMaterial = new BorrowMaterial();
+//             $borrowMaterial->user_id = $payload->user_id;
+//             $borrowMaterial->accession = $payload->accession;
+//             $borrowMaterial->fine = $fine;
+//             $borrowMaterial->borrow_date = now();
+//             $borrowMaterial->borrow_expiration = now()->addWeek();
+//             $borrowMaterial->status = 1; // Assuming status 1 means active
+//             $borrowMaterial->save();
+
+//             // Update the material status
+//             $material->status = 'Book succesfully borrowed'; // Update with appropriate status value
+//             $material->save();
+
+//             // Update reservation status
+//             $reservation->status = 0; // Assuming status 0 means completed or canceled
+//             $reservation->save();
+
+//             // Commit the transaction
+//             DB::commit();
+
+//             $data = ['borrow_material' => $borrowMaterial];
+//             return response()->json($data);
+//         } catch (\Exception $e) {
+//             // Rollback the transaction in case of an error
+//             DB::rollBack();
+//             return response()->json(['error' => 'An error occurred while processing the reservation', 'details' => $e->getMessage()], 500);
+//         }
 //     }
-
-//     // Check if the book is available
-//     if ($book->available == 0) {
-//         return response()->json(['error' => 'Book is not available for borrowing'], 400);
-//     }
-
-//     $reservation = Reservation::find($id);
-    
-//     // Find the user
-//     $user = User::find($payload->user_id);
-//     if (!$user) {
-//         return response()->json(['error' => 'User not found'], 404);
-//     }
-
-//     // Get the patron ID associated with the user
-//     $patronId = $user->patron_id;
-
-//     // Retrieve the patron from the patrons table
-//     $patron = Patron::find($patronId);
-//     if (!$patron) {
-//         return response()->json(['error' => 'Patron not found for the user'], 404);
-//     }
-
-//     // Get the fine associated with the patron
-//     $fine = $patron->fine;
-//     if (!$fine) {
-       
-//         $fine = 0; 
-        
-//     }
-//     // Create a new BorrowMaterial instance
-//     $borrowMaterial = new BorrowMaterial();
-//     $borrowMaterial->user_id = $payload->user_id;
-//     $borrowMaterial->book_id = $payload->book_id;
-//     $borrowMaterial->fine = $fine; 
-//     $borrowMaterial->borrow_date = now(); 
-//     $borrowMaterial->borrow_expiration = now()->addWeek(); 
-
-//     $reservation->status = 0;
-//     $material->available = 0;
-//     $reservation->save();
-    
-//     $borrowMaterial->save();
-//     $book->save();
-
-//     $data = ['borrow_material' => $borrowMaterial];
-//     return response()->json($data);
-// }
-
-

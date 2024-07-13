@@ -16,6 +16,7 @@ class BorrowMaterial extends Model
         'borrow_date',
         'borrow_expiration',
         'fine'
+
     ];
 
         public function material() {
@@ -25,6 +26,7 @@ class BorrowMaterial extends Model
         public function user(){
             return $this->belongsTo(User::class, 'user_id');
         }
+
 }
 
 
