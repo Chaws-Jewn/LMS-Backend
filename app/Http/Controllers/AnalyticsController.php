@@ -2,6 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Locker;
+use App\Models\Material;
+use App\Models\Project;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -10,7 +13,7 @@ class AnalyticsController extends Controller
 {
     public function getTotalLockers()
     {
-        $totalLockers = DB::table('lockers')->count();
+        $totalLockers = Locker::count();
 
         return response()->json(['total_lockers' => $totalLockers]);
     }
@@ -33,32 +36,52 @@ class AnalyticsController extends Controller
             return response()->json($usersPerDepartment);
 
     }
-    public function getTotalMaterials()
-    {
-        try {
-            $totalMaterials = DB::table('materials')
-                ->select(DB::raw('COUNT(accession) as total'))
-                ->first();
 
-            return response()->json($totalMaterials);
-        } catch (\Exception $e) {
-            Log::error('Error fetching total materials: ' . $e->getMessage());
-            return response()->json(['error' => 'Internal Server Error'], 500);
-        }
-    }
-    public function getTotalProjects()
-    {
-        try {
-            $totalProjects = DB::table('academic_projects')
-                ->select(DB::raw('COUNT(accession) as total'))
-                ->first();
+    public function getTotalMaterials() {
+        $materials = Material::select('material_type', DB::raw('count(*) as total'))
+                            ->groupBy('material_type')
+                            ->get();
 
-            return response()->json($totalProjects);
-        } catch (\Exception $e) {
-            Log::error('Error fetching total projects: ' . $e->getMessage());
-            return response()->json(['error' => 'Internal Server Error'], 500);
-        }
+        return $materials;
     }
+
+    // public function getTotalMaterials()
+    // {
+    //     try {
+    //         $totalMaterials = DB::table('materials')
+    //             ->select(DB::raw('COUNT(accession) as total'))
+    //             ->first();
+
+    //         return response()->json($totalMaterials);
+    //     } catch (\Exception $e) {
+    //         Log::error('Error fetching total materials: ' . $e->getMessage());
+    //         return response()->json(['error' => 'Internal Server Error'], 500);
+    //     }
+    // }
+
+    
+    public function getTotalProjects() {
+        $projects = Project::join('programs', 'academic_projects.program', '=', 'programs.program_short')
+                                    ->select('programs.department_short', DB::raw('count(*) as total'))
+                                    ->groupBy('programs.department_short')
+                                    ->get();                    
+
+        return response()->json($projects);
+    }
+
+    // public function getTotalProjects()
+    // {
+    //     try {
+    //         $totalProjects = DB::table('academic_projects')
+    //             ->select(DB::raw('COUNT(accession) as total'))
+    //             ->first();
+
+    //         return response()->json($totalProjects);
+    //     } catch (\Exception $e) {
+    //         Log::error('Error fetching total projects: ' . $e->getMessage());
+    //         return response()->json(['error' => 'Internal Server Error'], 500);
+    //     }
+    // }
 
     public function getTotalBorrowed()
     {
@@ -174,34 +197,34 @@ class AnalyticsController extends Controller
 
         return response()->json($topBorrowers);
     }
-    public function getTotalPeriodicals()
-    {
-        $totalPeriodicals = DB::table('materials')
-            ->where('material_type', 1) // 1 -> periodicals
-            ->count();
+    // public function getTotalPeriodicals()
+    // {
+    //     $totalPeriodicals = DB::table('materials')
+    //         ->where('material_type', 1) // 1 -> periodicals
+    //         ->count();
 
-        return response()->json(['totalPeriodicals' => $totalPeriodicals]);
-    }
+    //     return response()->json(['totalPeriodicals' => $totalPeriodicals]);
+    // }
 
-    public function getTotalArticles()
-    {
-        $totalArticles = DB::table('materials')
-            ->where('material_type', 2) // 2 -> articles
-            ->count();
+    // public function getTotalArticles()
+    // {
+    //     $totalArticles = DB::table('materials')
+    //         ->where('material_type', 2) // 2 -> articles
+    //         ->count();
 
-        return response()->json(['totalArticles' => $totalArticles]);
-    }
+    //     return response()->json(['totalArticles' => $totalArticles]);
+    // }
 
-    public function getTotalProjectsByDepartment()
-    {
-        $totalProjectsByDepartment = DB::table('academic_projects')
-            ->join('programs', 'academic_projects.program', '=', 'programs.program_short')
-            ->select('programs.department_short', DB::raw('count(*) as total_projects'))
-            ->groupBy('programs.department_short')
-            ->get();
+    // public function getTotalProjectsByDepartment()
+    // {
+    //     $totalProjectsByDepartment = DB::table('academic_projects')
+    //         ->join('programs', 'academic_projects.program', '=', 'programs.program_short')
+    //         ->select('programs.department_short', DB::raw('count(*) as total_projects'))
+    //         ->groupBy('programs.department_short')
+    //         ->get();
 
-        return response()->json($totalProjectsByDepartment);
-    }
+    //     return response()->json($totalProjectsByDepartment);
+    // }
     public function getLockerVisits()
     {
         $lockerVisits = DB::table('lockers_logs')

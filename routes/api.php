@@ -114,9 +114,9 @@ Route::middleware(['auth:sanctum', 'ability:maintenance'])->group(function () {
         Route::get('/top-borrowers', [AnalyticsController::class, 'topBorrowers']);
         Route::get('/total-unavailable-books', [AnalyticsController::class, 'totalUnavailableBooks']);
         Route::get('/total-occupied-books', [AnalyticsController::class, 'totalOccupiedBooks']);
-        Route::get('/total-periodicals', [AnalyticsController::class, 'getTotalPeriodicals']);
-        Route::get('/total-articles', [AnalyticsController::class, 'getTotalArticles']);
-        Route::get('/total-projects-by-department', [AnalyticsController::class, 'getTotalProjectsByDepartment']);
+        // Route::get('/total-periodicals', [AnalyticsController::class, 'getTotalPeriodicals']);
+        // Route::get('/total-articles', [AnalyticsController::class, 'getTotalArticles']);
+        // Route::get('/total-projects-by-department', [AnalyticsController::class, 'getTotalProjectsByDepartment']);
         Route::get('/locker-visits', [AnalyticsController::class, 'getLockerVisits']);
     });
 });
