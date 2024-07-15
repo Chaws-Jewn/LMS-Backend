@@ -9,20 +9,20 @@ class Reservation extends Model
 {
     use HasFactory;
     public $timestamps = false;
+    protected $table = 'borrow_materials';
 
     protected $fillable = [
         'user_id',
         'book_id',
-        'start_date',
-        'end_date',
-        'fine',
-        'status',
-        'type'
+        'reserve_date',
+        'reserve_expiration',
+        'price',
+        'status'
     ];
 
     protected $casts = [
-        'start_date' => 'datetime',
-        'end_date' => 'datetime'
+        'reserve_date' => 'datetime',
+        'reserve_expiration' => 'datetime'
     ];
 
     // Define relationships
@@ -33,6 +33,6 @@ class Reservation extends Model
 
     public function book()
     {
-        return $this->belongsTo(Book::class);
+        return $this->belongsTo(Material::class);
     }
 }

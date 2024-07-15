@@ -15,7 +15,8 @@ class BorrowMaterial extends Model
         'book_id',
         'borrow_date',
         'borrow_expiration',
-        'fine'
+        'fine',
+        
 
 
 

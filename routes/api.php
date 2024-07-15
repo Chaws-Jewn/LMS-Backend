@@ -252,6 +252,14 @@ Route::group(['middleware' => ['auth:sanctum', 'ability:circulation']], function
             Route::get('periodicals/search/', [StudentMaterialController::class, 'searchPeriodicals']);
             Route::get('articles/search/', [StudentMaterialController::class, 'searchArticles']);
             Route::get('projects/search/', [StudentMaterialController::class, 'searchProjects']);
+
+
+            //new API for reservation
+            Route::post('newreservations', [StudentReservationController::class, 'reservebook']);
+            Route::get('reservations/{user_id}', [StudentReservationController::class, 'getReservationsByUserId']);
+            Route::get('reservations/{reservationId}', [StudentReservationController::class, 'getReservationById']);
+
+
         });
     
         // Reservation routes
@@ -264,9 +272,9 @@ Route::group(['middleware' => ['auth:sanctum', 'ability:circulation']], function
         Route::get('borrow/user/{userId}', [BorrowMaterialController::class, 'getByUserId']);
             
         Route::get('queue-pos/{id}', [ReserveBookController::class, 'getQueuePosition']);  
-        
+
          //new reservation for student 
-         Route::post('newreservations', [StudentReservationController::class, 'reservebook']);
+       
     });
 
 // RED ZONE
