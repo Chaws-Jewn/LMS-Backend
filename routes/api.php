@@ -101,12 +101,17 @@ Route::middleware(['auth:sanctum', 'ability:maintenance'])->group(function () {
 
     Route::prefix('analytics')->group(function() {
         //Analytics Api
-        Route::get('/total-lockers', [AnalyticsController::class, 'getTotalLockers']);
+        Route::get('/total-lockers', [AnalyticsController::class, 'totalLockers']);
+        Route::get('/locker-user-by-department', [AnalyticsController::class, 'lockerUsersByDepartment']);
         Route::get('/total-active-users', [AnalyticsController::class, 'getTotalActiveUsers']);
         Route::get('/total-users-per-department', [AnalyticsController::class, 'getTotalUsersPerDepartment']);
+
+        //cataloging
         Route::get('/total-materials', [AnalyticsController::class, 'getTotalMaterials']);
+
         Route::get('/total-projects', [AnalyticsController::class, 'getTotalProjects']);
         Route::get('/total-borrowed', [AnalyticsController::class, 'getTotalBorrowed']);
+
         Route::get('/available-books', [AnalyticsController::class, 'getAvailableBooks']);
         Route::get('/unreturned-books', [AnalyticsController::class, 'getUnreturnedBooks']);
         Route::get('/missing-books', [AnalyticsController::class, 'getMissingBooks']);
