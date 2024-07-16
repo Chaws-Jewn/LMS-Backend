@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Models\Program;
-use App\Models\Department;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 
@@ -12,7 +11,7 @@ class ProgramController extends Controller
     public function get(Request $request) {
         return Program::all();
     }
-    
+
     public function addProgram(Request $request){
         $data = Validator::make($request->all(), [
             'program_short' => 'required|string|max:10',
@@ -26,7 +25,18 @@ class ProgramController extends Controller
             return response()->json(['errors', $data->errors()], 422);
         }
 
-        Program::create($data->validated());
+        $program = Program::create($data->validated());
+
+        // Log the activity
+        $log = new ActivityLogController();
+        $logParam = new \stdClass();
+        $user = $request->user();
+        $logParam->system = 'Program Management';
+        $logParam->username = $user->username;
+        $logParam->fullname = $user->first_name . ' ' . $user->middle_name . ' ' . $user->last_name . ' ' . $user->ext_name;
+        $logParam->position = $user->position;
+        $logParam->desc = 'Added a new program: ' . $program->program_full;
+        $log->savePersonnelLog($logParam);
 
         return response()->json(['success' => 'Program has been created.'], 201);
     }

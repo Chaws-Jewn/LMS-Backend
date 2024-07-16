@@ -76,7 +76,7 @@ class ArticleController extends Controller
         $logParam->username = $user->username;
         $logParam->fullname = $user->first_name . ' ' . $user->middle_name . ' ' . $user->last_name . ' ' . $user->ext_name;
         $logParam->position = $user->position;
-        $logParam->desc = 'Added ' . $type . 'article of accession ' . $model->accession;
+        $logParam->desc = 'Added ' . $type . 'article of accession ' . $request->accession;
 
         $log->savePersonnelLog($logParam);
 

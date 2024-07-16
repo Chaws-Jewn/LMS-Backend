@@ -51,6 +51,8 @@ class MaterialFactory extends Factory
                 'remarks' => fake()->sentence(),
                 'source_of_fund' => fake()->randomElement(['Donated', 'Replacement', 'Purchased']),
                 'price' => fake()->numberBetween(1, 1000),
+                'status' => fake()->numberBetween(0, 3),
+                'inventory_status' => fake()->numberBetween(0, 4),
                 'location' => fake()->randomElement(['ABCOMM', 'CAD', 'COM', 'EDUC', 'FIL', 'FOR', 'FS', 'HM']),
                 'call_number' => Str::random(5),
                 'author_number' => Str::random(5)  

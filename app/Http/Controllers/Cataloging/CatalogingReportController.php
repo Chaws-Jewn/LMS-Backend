@@ -103,64 +103,6 @@ class CatalogingReportController extends Controller
         return $categoryCounts;
     }
 
-    public function generatePDF(Request $request, string $type){
-
-        $dompdf = new Dompdf();
-
-        if(!in_array($type, ['book', 'journal', 'magazine', 'article', 'newspaper']))
-            return response()->json(['message' => 'Invalid type'], 404);
-
-        if($type == 'book') {
-            $materials = Book::with('location')->where('id', '<', 100)->get();
-            foreach($materials as $material) {
-                $material->authors = json_decode($material->authors);
-            }
-
-            // Render the HTML view to a string
-            $html = view('cataloging.books', ['materials' => $materials])->render();
-        } elseif($type == 'journal' || $type == 'magazine' || $type == 'newspaper') {
-            $materials = Periodical::where('material_type', 'journal')->where('id', '<', 50)->get();
-
-            foreach($materials as $material) {
-                $material->authors = json_decode($material->authors);
-            }
-
-            // Render the HTML view to a string
-            $html = view('cataloging.periodicals', ['materials' => $materials])->render();
-        } elseif($type == 'article') {
-            $materials = Article::where('id', '<', 50)->get();
-
-            foreach($materials as $material) {
-                $material->authors = json_decode($material->authors);
-            }
-
-            // Render the HTML view to a string
-            $html = view('cataloging.articles', ['materials' => $materials])->render();
-        } else {
-            return response()->json(['message' => 'Error generating file'], 500);
-        }
-
-        $dompdf->loadHtml($html);
-
-        // Optional: Set up the paper size and orientation
-        $dompdf->setPaper('A4', 'landscape');
-
-        // Render the PDF
-        $dompdf->render();
-
-        $pdfContent = $dompdf->output();
-
-        
-        $date = Carbon::now('Asia/Singapore')->format('Ymd-Hisu');
-        $filename = "Books_{$date}.pdf";
-
-        // Return the PDF as a response
-        return response($pdfContent, 200, [
-            'Content-Type' => 'application/pdf',
-            'Content-Disposition' => 'inline; filename="' . $filename . '"'
-        ]);
-    }
-
     public function generateExcel(Request $request, string $type) {
 
         $keys = collect($request->payload);

@@ -9,6 +9,7 @@ use Exception;
 use Illuminate\Http\Request;
 use App\Models\Location;
 use Storage, Str, DB;
+use App\Http\Controllers\ActivityLogController;
 
 class BookController extends Controller
 {
@@ -16,7 +17,6 @@ class BookController extends Controller
     const URL = 'http://127.0.0.1:8000';
 
     public function add(Request $request) {
-
         $request->validate([
             'accession' => 'nullable|string|max:20',
             'title' => 'required|string|max:255',
@@ -86,18 +86,19 @@ class BookController extends Controller
                 $model->save();
             }
         }
+        $log = new ActivityLogController();
 
+        $logParam = new \stdClass(); // Instantiate stdClass
 
-        // $location = Location::where('id', $model->location_id)->value('location');
+        $user = $request->user();
 
-        // $log = new CatalogingLogController();
+        $logParam->system = 'Cataloging';
+        $logParam->username = $user->username;
+        $logParam->fullname = $user->first_name . ' ' . $user->middle_name . ' ' . $user->last_name . ' ' . $user->ext_name;
+        $logParam->position = $user->position;
+        $logParam->desc = 'Added book of accession ' . $request->accession;
 
-        // if($request->copies == 1)
-        //     $title = $model->title;
-        // else
-        //     $title = $model->title . ' (' . $request->copies . ')';
-
-        // $log->add($request->user()->id, 'Added', $title, 'book', $location);
+        $log->savePersonnelLog($logParam);
         
         return response()->json($model, 201);
     }
@@ -152,6 +153,20 @@ class BookController extends Controller
 
         $model->authors = json_encode($authors);
         $model->save();
+
+        $log = new ActivityLogController();
+
+        $logParam = new \stdClass(); // Instantiate stdClass
+
+        $user = $request->user();
+
+        $logParam->system = 'Cataloging';
+        $logParam->username = $user->username;
+        $logParam->fullname = $user->first_name . ' ' . $user->middle_name . ' ' . $user->last_name . ' ' . $user->ext_name;
+        $logParam->position = $user->position;
+        $logParam->desc = 'Updated book of accession ' . $model->accession;
+
+        $log->savePersonnelLog($logParam);
 
         return response()->json($model, 200);
     }

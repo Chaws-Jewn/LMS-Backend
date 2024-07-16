@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 use App\Models\User;
+use App\Models\Program;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
@@ -92,7 +93,12 @@ class AuthController extends Controller
                     'token' => $token,
                     'id' => $user->id,
                     'displayName' => $user->first_name . ' ' . $user->last_name,
-                    'position' => $user->position,
+                    'position' => $user->role,
+                    'first_name' => $user->first_name,
+                    'last_name' => $user->last_name,
+                    'domain_account' => $user->domain_email,
+                    'main_address' => $user->main_address,
+                    'department' => Program::where('program_short', $user->program)->value('department_short'),
                 ];
 
                 if(in_array($system, $abilities)) return response()->json($responseData, 200);

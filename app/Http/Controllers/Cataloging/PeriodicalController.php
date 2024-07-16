@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 use Exception;
 use Storage, Str;
 use App\Http\Controllers\ImageController;
+use App\Http\Controllers\ActivityLogController;
 
 class PeriodicalController extends Controller
 {
@@ -72,6 +73,40 @@ class PeriodicalController extends Controller
         
         $model->save();
 
+        $log = new ActivityLogController();
+
+        $logParam = new \stdClass(); // Instantiate stdClass
+
+        switch($model->periodical_type) {
+            case 0:
+                $type = 'journal ';
+                break;
+            
+            case 1:
+                $type = 'magazine ';
+                break;
+            
+            case 2:
+                $type = 'newspaper ';
+                break;
+            
+            default:
+                $type = '';
+                break;
+        }
+
+        $user = $request->user();
+
+        $logParam->system = 'Cataloging';
+        $logParam->username = $user->username;
+        $logParam->fullname = $user->first_name . ' ' . $user->middle_name . ' ' . $user->last_name . ' ' . $user->ext_name;
+        $logParam->position = $user->position;
+        $logParam->desc = 'Added ' . $type . 'periodical of accession ' . $request->accession;
+
+        $log->savePersonnelLog($logParam);
+
+
+
         return response()->json($model, 201);
     }
 
@@ -110,6 +145,38 @@ class PeriodicalController extends Controller
         }
 
         $model->save();
+
+        $log = new ActivityLogController();
+
+        $logParam = new \stdClass(); // Instantiate stdClass
+
+        switch($model->periodical_type) {
+            case 0:
+                $type = 'journal ';
+                break;
+            
+            case 1:
+                $type = 'magazine ';
+                break;
+            
+            case 2:
+                $type = 'newspaper ';
+                break;
+            
+            default:
+                $type = '';
+                break;
+        }
+
+        $user = $request->user();
+
+        $logParam->system = 'Cataloging';
+        $logParam->username = $user->username;
+        $logParam->fullname = $user->first_name . ' ' . $user->middle_name . ' ' . $user->last_name . ' ' . $user->ext_name;
+        $logParam->position = $user->position;
+        $logParam->desc = 'Updated ' . $type . 'periodical of accession ' . $model->accession;
+
+        $log->savePersonnelLog($logParam);
 
         return response()->json($model, 200);
     }

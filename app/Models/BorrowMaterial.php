@@ -15,7 +15,8 @@ class BorrowMaterial extends Model
         'accession',
         'borrow_date',
         'borrow_expiration',
-        'fine'
+        'fine',
+        
 
     ];
 

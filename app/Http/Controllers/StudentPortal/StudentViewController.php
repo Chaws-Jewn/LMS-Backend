@@ -6,7 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Material;
 use App\Models\Project;
-use Storage;
+use Illuminate\Support\Facades\Storage;
 
 class StudentViewController extends Controller
 {
@@ -14,30 +14,28 @@ class StudentViewController extends Controller
     const URL = 'http://127.0.0.1:8000';
     // BOOKS
     public function viewBooks() {
-        $books = Material::with('location')->orderByDesc('updated_at')->get();
         
-        $books_array = [];
-        foreach($books as $book) {
-            $image_url = null;
-            if($book->image_url != null)
-                $image_url = self::URL .  Storage::url($book->image_url);
 
-            array_push($books_array, [
-                'id' => $book->id,
-                'image_url' => $image_url,
-                'location' => $book->location->location,
-                'full_location' => $book->location->full_location,
-                'title' => $book->title,
-                'authors' => json_decode($book->authors),
-                'volume' => $book->volume,
-                'edition' => $book->edition,
-                'available' => $book->available,
-                'copyright' => $book->copyright,
-                'fine' => $book->fine
-            ]);
-        }
-        return $books_array;
+          $books = Material::all(); // Fetching all books
+
+    $books_array = [];
+    foreach($books as $book) {
+        $image_url = $book->image_url ? self::URL . Storage::url($book->image_url) : null;
+
+        array_push($books_array, [
+            'id' => $book->accession, 
+            'image_url' => $image_url,
+            ' location' => $book->location,
+            'authors' => json_decode($book->authors),
+            'volume' => $book->volume,
+            'edition' => $book->edition,
+            'available' => $book->status, 
+            'copyright' => $book->copyright,
+            'fine' => $book->fine ?? 0
+        ]);
     }
+    return $books_array;
+}
 
     public function viewBook(int $id) {
         $book = Material::find($id, ['available', 'title', 'id', 'call_number', 'copyright', 'price', 'authors',
