@@ -17,44 +17,39 @@ class MaterialViewController extends Controller
 
     public function getMaterials(String $type) {    
     
+        $materials = [];
         switch($type) {
             case 'books':
                 $materials = Material::where('material_type', $type)->orderByDesc('updated_at')
-                ->get(['accession', 'title', 'authors', 'location', 'copyright']);
+                ->get(['accession', 'title', 'authors', 'location', 'copyright', 'created_at']);
                 break;
             
             case 'periodicals':
                 $materials = Material::where([['material_type', 1], ['periodical_type', 0]])
                 ->orderByDesc('updated_at')
-                ->get(['accession', 'title', 'author', 'publisher', 'copyright']);
+                ->get(['accession', 'title', 'authors', 'publisher', 'copyright', 'created_at']);
                 break;
             
             case 'articles':
                 $materials = Material::where([['material_type', 2]])
                 ->orderByDesc('updated_at')
-                ->get(['accession', 'title', 'author', 'publisher', 'date_published', 'copyright']);
+                ->get(['accession', 'title', 'authors', 'publisher', 'date_published', 'created_at']);
                 break;
 
             case 'audio-visuals':
                 $materials = Material::where([['material_type', 3]])
                 ->orderByDesc('updated_at')
-                ->get(['accession', 'title', 'authors', 'copyright']);
+                ->get(['accession', 'title', 'authors', 'copyright', 'created_at']);
                 break;
             
             default:
                 return response()->json(['response' => 'Invalid material type']);
 
             foreach($materials as $material) {
-                if($material->image_url != null)
-                    $material->image_url = self::URL .  Storage::url($material->image_url);
-
                 if($material->authors)
                     $material->authors = json_decode($material->authors);
             }
-
-            return $materials;
-        }
-        
+        }        
 
         foreach($materials as $material) {
             $material->authors = json_decode($material->authors);
@@ -68,7 +63,7 @@ class MaterialViewController extends Controller
         switch($type) {
             case 'periodicals':
                 $material_type = 1;
-                $columns = ['accession', 'title', 'authors', 'publisher', 'copyright'];
+                $columns = ['accession', 'title', 'authors', 'publisher', 'copyright', 'acquired_date'];
                 break;
 
             case 'articles':
@@ -85,9 +80,6 @@ class MaterialViewController extends Controller
         ->get($columns);        
 
         foreach($materials as $material) {
-            if($material->image_url != null)
-                $material->image_url = self::URL . Storage::url($material->image_url);
-
             $material->authors = json_decode($material->authors);
         }
         
@@ -97,9 +89,6 @@ class MaterialViewController extends Controller
     public function getMaterial($id) {
         $material = Material::where('accession', $id)->firstOrFail();
         $material->authors = json_decode($material->authors);
-        if($material->image_url != null)
-            $material->image_url = self::URL . Storage::url($material->image_url);
-
         return $material;
     }
 }

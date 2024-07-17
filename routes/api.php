@@ -20,6 +20,7 @@ App\Http\Controllers\Cataloging\BookController, App\Http\Controllers\Cataloging\
 App\Http\Controllers\Cataloging\CatalogingReportController, App\Http\Controllers\Cataloging\MaterialArchiveController;
 
 use App\Http\Controllers\BorrowBookController, App\Http\Controllers\ReservationController;
+use App\Http\Controllers\Cataloging\ViewArchivesController;
 
 use App\Http\Controllers\LockerController;
 
@@ -161,8 +162,15 @@ Route::group(['middleware' => ['auth:sanctum', 'ability:cataloging']], function 
         });
 
         // ARCHIVE Materials
-        Route::delete('material/archive/{id}', [MaterialArchiveController::class, 'store']);
-        Route::delete('project/archive/{id}', [ProjectController::class, 'archive']);
+        Route::delete('materials/archive/{id}', [MaterialArchiveController::class, 'storeMaterial']);
+        Route::delete('projects/archive/{id}', [MaterialArchiveController::class, 'storeProject']);
+
+        // RESTORE Materials
+        Route::post('materials/restore/{id}', [MaterialArchiveController::class, 'restoreMaterial']);
+        Route::post('projects/restore/{id}', [MaterialArchiveController::class, 'restoreProject']);
+
+        //PERMANENTLY DELETE
+        Route::delete('permanently-delete/{type}/{id}', [MaterialArchiveController::class, 'deleteMaterial']);
 
         // MATERIAL VIEWING
         Route::get('books/locations', [LocationController::class, 'getLocations']);
@@ -177,6 +185,15 @@ Route::group(['middleware' => ['auth:sanctum', 'ability:cataloging']], function 
         Route::post('projects/process', [ProjectController::class, 'add']);
         Route::put('projects/process/{id}', [ProjectController::class, 'update']);
 
+        // ARCHIVE VIEWING
+        Route::group(['prefix' => 'archives'], function() {
+            Route::get('materials/{type}', [ViewArchivesController::class, 'getMaterials']);
+            Route::get('projects', [ViewArchivesController::class, 'getProjects']);
+
+            // By type
+            Route::get('materials/{type}/type/{periodical_type}', [ViewArchivesController::class, 'getMaterialsByType']);
+        });
+        
         // Get programs
         Route::get('programs', [ProgramController::class, 'get']);
     });

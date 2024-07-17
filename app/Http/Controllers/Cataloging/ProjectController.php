@@ -153,7 +153,7 @@ class ProjectController extends Controller
         $logParam->username = $user->username;
         $logParam->fullname = $user->first_name . ' ' . $user->middle_name . ' ' . $user->last_name . ' ' . $user->ext_name;
         $logParam->position = $user->position;
-        $logParam->desc = 'Added project of accession ' . $model->accession;
+        $logParam->desc = 'Added project of accession ' . $request->accession;
 
         $log->savePersonnelLog($logParam);
 
@@ -223,46 +223,5 @@ class ProjectController extends Controller
         $log->savePersonnelLog($logParam);
 
         return response()->json($model, 200);
-    }
-
-    public function archive(Request $request, $id) {
-        
-        $model = Project::findOrFail($id);
-
-        DB::transaction(function () use ($model, $id) {
-            DB::connection('archives')->table('academic_projects')->insert([
-                'accession' => $model->accession,
-                'category' => $model->category,
-                'title' => $model->title,
-                'authors' => $model->authors,
-                'program' => $model->program,
-                'image_url' => $model->image_url,
-                'date_published' => $model->date_published,
-                'keywords' => $model->keywords,
-                'language' => $model->language,
-                'abstract' => $model->abstract,
-                'created_at' => $model->created_at,
-                'archived_at' => now()
-            ]);
-            
-            $model->delete();
-        });
-
-        
-        $log = new ActivityLogController();
-
-        $logParam = new \stdClass(); // Instantiate stdClass
-
-        $user = $request->user();
-
-        $logParam->system = 'Cataloging';
-        $logParam->username = $user->username;
-        $logParam->fullname = $user->first_name . ' ' . $user->middle_name . ' ' . $user->last_name . ' ' . $user->ext_name;
-        $logParam->position = $user->position;
-        $logParam->desc = 'Archived project of accession ' . $id;
-
-        $log->savePersonnelLog($logParam);
-
-        return response()->json(['Response' => 'Record archived successfully'], 200);
     }
 }
