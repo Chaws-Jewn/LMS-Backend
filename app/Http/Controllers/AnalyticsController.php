@@ -101,7 +101,7 @@ class AnalyticsController extends Controller
         try {
             $availableBooks = DB::table('materials')
                 ->where('material_type', 0) // 0 = books
-                ->where('status', '0')
+                ->where('status', 0)
                 ->count();
 
             return response()->json(['available_books' => $availableBooks]);

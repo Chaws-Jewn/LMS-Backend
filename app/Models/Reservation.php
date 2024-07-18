@@ -33,6 +33,6 @@ class Reservation extends Model
 
     public function book()
     {
-        return $this->belongsTo(Material::class);
+        return $this->belongsTo(Material::class, 'book_id');
     }
 }

@@ -239,7 +239,7 @@ Route::group(['middleware' => ['auth:sanctum', 'ability:circulation']], function
             Route::get('book/id/{id}', [StudentMaterialController::class, 'viewBook']);
             Route::get('periodicals/id/{id}', [StudentMaterialController::class, 'getPeriodical']);
             Route::get('article/id/{id}', [StudentMaterialController::class, 'viewArticle']);
-            Route::get('project/id/{id}', [StudentMaterialController::class, 'getProject']);
+            Route::get('project/id/{accession}', [StudentMaterialController::class, 'getProjectByAccession']);
     
             // For filtering material type
             Route::get('periodicals/type/{type}', [StudentMaterialController::class, 'getByType']);
@@ -257,23 +257,29 @@ Route::group(['middleware' => ['auth:sanctum', 'ability:circulation']], function
             //new API for reservation
             Route::post('newreservations', [StudentReservationController::class, 'reservebook']);
             Route::get('reservations/{user_id}', [StudentReservationController::class, 'getReservationsByUserId']);
-            Route::get('reservations/{reservationId}', [StudentReservationController::class, 'getReservationById']);
+            Route::get('reservations/user/{id}', [StudentReservationController::class, 'viewReservationById']);
+            Route::delete('reservations/cancel/{id}', [StudentReservationController::class, 'deleteReservation']);
+
+
+
+            // Audio Visuals
+            Route::get('audio-visuals', [StudentMaterialController::class, 'viewAudioVisuals']);
+            // By Accession
+            Route::get('audio-visuals/{accession}', [StudentMaterialController::class, 'getAudioVisualByAccession']);
+            // Search for Audio Visuals 
+            Route::get('audio-visuals/search', [StudentMaterialController::class, 'searchAudioVisuals']);
+
+            //announcement
+            Route::get('announcements', [StudentViewController::class, 'index']);
+            Route::get('announcements/{id}', [StudentViewController::class, 'show']);
+
+            //borrow shis
+            Route::get('borrowed/user/{user_id}', [StudentReservationController::class, 'getBorrowedByUserId']);
+            Route::get('borrowed/{id}', [StudentReservationController::class, 'getBorrowedById']);
+
 
 
         });
-    
-        // Reservation routes
-        Route::post('reservations', [ReservationController::class, 'store']);
-        Route::delete('cancel-reservation/{id}', [ReservationController::class, 'cancelReservation']);
-        Route::get('students/queue-pos/{id}', [ReserveBookController::class, 'getQueuePosition']);
-        
-        Route::get('reservations/{id}', [ReservationController::class, 'getUserById']);
-        Route::delete('reservations/{reservation}', [ReservationController::class, 'destroy']);
-        Route::get('borrow/user/{userId}', [BorrowMaterialController::class, 'getByUserId']);
-            
-        Route::get('queue-pos/{id}', [ReserveBookController::class, 'getQueuePosition']);  
-
-         //new reservation for student 
        
     });
 

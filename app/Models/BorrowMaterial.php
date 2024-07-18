@@ -45,7 +45,7 @@ class BorrowMaterial extends Model
     ];
 
         public function material() {
-            return $this->belongsTo(material::class, 'book_id', 'accession');
+            return $this->belongsTo(Material::class, 'book_id', 'accession');
         }
 
         public function user(){
