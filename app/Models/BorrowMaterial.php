@@ -16,6 +16,7 @@ class BorrowMaterial extends Model
         'borrow_date',
         'borrow_expiration',
         'fine',
+        'status',
         
 
     ];
@@ -28,26 +29,13 @@ class BorrowMaterial extends Model
             return $this->belongsTo(User::class, 'user_id');
         }
 
+        // public function program() {
+        //     return $this->belongsTo(Program::class,  'program_short', 'department_short');
+        // }
+
+        public function student_program() {
+            return $this->belongsTo(Program::class, 'program', 'program_short');
+        }
 }
 
-
-// 'name',
-        // 'patron_type',
-        // 'department',
-        // 'reason',
-        // 'accession_number',
-        // 'title',
-        // 'location',
-        // 'author',
-        // 'time',
-        // 'num_material',
-        // 'gender',
-        // 'name_staff',
-        // 'position',
-        // 'user_fine',
-        // 'date_of_request',
-        
-        // 'fine',
-        // 'due',
-        // 'status',
 

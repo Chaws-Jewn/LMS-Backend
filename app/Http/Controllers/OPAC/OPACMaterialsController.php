@@ -93,6 +93,11 @@ class OPACMaterialsController extends Controller
         if($material->image_url != null)
             $material->image_url = self::URL . Storage::url($material->image_url);
 
+        //return na agad kung di book
+        if($material->material_type != 0) {
+            return $material;
+        }
+ 
         $totalCopies = Material::where('title', $material->title)
                             ->where('edition', $material->edition)
                             ->where('volume', $material->volume)
