@@ -64,7 +64,7 @@ class ReserveBookController extends Controller
     
             // Allowed number of active reservations
             $activeReservationsCount = BorrowMaterial::where('user_id', $payload['user_id'])
-                                                    ->where('status', 1) // 1 means active reservation
+                                                    ->where('status', 2) // 2 means active reservation
                                                     ->count();
     
             if ($activeReservationsCount >= $materialsAllowed) {
@@ -82,7 +82,7 @@ class ReserveBookController extends Controller
                 $reservation->reserve_expiration = $payload['reserve_expiration'];
                 $reservation->fine = 0; // Initial fine set to 0 for reservation
                 $reservation->reservation_type = 1; // Assuming 1 is walk-in
-                $reservation->status = 1; // Status 1 for active reservation
+                $reservation->status = 2; // Status 2 for active reservation
                 $reservation->save();
     
                 // Update the material status to indicate it's reserved
@@ -111,7 +111,7 @@ class ReserveBookController extends Controller
         // Fetch all reservation data from the borrow_materials table
         $reservelist = BorrowMaterial::with(['user', 'user.patron', 'material'])
                         ->whereIn('reservation_type', [0, 1])
-                        ->where('status', '!=', 0)
+                        ->where('status', '=', 2)
                         ->orderBy('book_id')
                         ->orderBy('reserve_date', 'asc')
                         ->get();

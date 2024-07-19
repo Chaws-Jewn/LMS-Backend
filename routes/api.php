@@ -29,7 +29,7 @@ App\Http\Controllers\AnnouncementController, App\Http\Controllers\LockerHistoryC
 
 //Circulation
 use App\Http\Controllers\Circulation\BorrowMaterialController, App\Http\Controllers\Circulation\CirculationUserController, 
-App\Http\Controllers\Circulation\PatronController, App\Http\Controllers\Circulation\ReserveBookController;
+App\Http\Controllers\Circulation\PatronController, App\Http\Controllers\Circulation\ReserveBookController, App\Http\Controllers\Circulation\CirculationReport;
 
 Route::post('/studentlogin', [AuthController::class, 'studentLogin']);
 Route::get('/', function (Request $request) {
@@ -211,7 +211,7 @@ Route::group(['middleware' => ['auth:sanctum', 'ability:circulation']], function
 
     //borrow book
     Route::post('/circulation/borrow/book', [BorrowMaterialController::class, 'borrowbook']);
-    Route::post('/circulation/fromreserve/book/{id}', [BorrowMaterialController::class, 'fromreservation']);
+    Route::put('/circulation/fromreserve/book/{id}', [BorrowMaterialController::class, 'fromreservation']);
     Route::get('/circulation/getpatrons', [PatronController::class, 'index']);
     Route::get('/circulation/borrow-count/{id}', [BorrowMaterialController::class, 'borrowcount']);
 
@@ -219,14 +219,16 @@ Route::group(['middleware' => ['auth:sanctum', 'ability:circulation']], function
     Route::get('/circulation/get-book/{accession}', [CirculationUserController::class, 'getBook']);
     Route::get('/circulation/get-user/{id}', [CirculationUserController::class, 'getUser']);
 
-    //get report
-    Route::get('/circulation/report', [BorrowMaterialController::class, 'bookBorrowersReport']);
+    //circulation report
+    Route::get('/circulation/report', [CirculationReport::class, 'report']);
     Route::get('/circulation/topborrowers', [BorrowMaterialController::class, 'topborrowers']);
     Route::get('/circulation/mostborrowed', [BorrowMaterialController::class, 'mostborrowed']);
 
     //delete
     Route::delete('/circulation/delete-borrowlist/{id}', [BorrowMaterialController::class, 'destroy']);
     Route::delete('/circulation/delete-reservelist/{id}', [ReserveBookController::class,'destroy']);
+
+    Route::get('/circulation/borrowdetail', [CirculationUserController::class,'borrowdetail']);
 });
 
 /* STUDENT ROUTES */
