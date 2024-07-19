@@ -84,6 +84,8 @@ class BookController extends Controller
                 }
 
                 $model->authors = json_encode($authors);
+                $model->status = 1;
+                $model->inventory_status = 0;
                 
                 $model->save();
             }

@@ -77,4 +77,24 @@ class ViewArchivesController extends Controller
             return response()->json(['message' => 'Invalid periodical type'], 404);
         }
     }
+
+    function getMaterial(string $type, $id) {
+        switch($type){
+            case 'material':
+                $material = DB::connection('archives')->table('materials')->where('accession', $id)->first();
+                break;
+
+            case 'project':
+                $material = DB::connection('archives')->table('academic_projects')->where('accession', $id)->first();
+                if($material->keywords) $material->keywords = json_decode($material->keywords);
+                break;
+
+            default:
+                return response()->json(['message' => 'Invalid periodical type'], 404);
+        }   
+
+        if($material->authors) $material->authors = json_decode($material->authors);
+        if($material->image_url) $material->image_url = self::URL . Storage::url($material->image_url);
+        return $material;
+    }
 }

@@ -151,11 +151,10 @@ Route::group(['middleware' => ['auth:sanctum', 'ability:cataloging']], function 
 
     // View Reports
     Route::group(['prefix' => 'cataloging'], function() {
-        Route::get('reports/material-counts', [CatalogingReportController::class, 'getCount']);
-        Route::get('reports/project-counts/{department}', [CatalogingReportController::class, 'countProjects']);
-        Route::get('reports/pdf/{type}', [CatalogingReportController::class, 'generatePdf']);
-        Route::post('reports/excel/{type}', [CatalogingReportController::class, 'generateExcel']);
-        Route::get('logs', [CatalogingLogController::class, 'get']);
+        Route::group(['prefix' => 'reports'], function() {
+            Route::get('material-counts', [CatalogingReportController::class, 'countMaterials']);
+            Route::get('project-counts', [CatalogingReportController::class, 'countProjects']);
+        });
 
         // PROCESSING OF MATERIALS
         Route::group(['prefix' => 'materials'], function() {
@@ -200,6 +199,8 @@ Route::group(['middleware' => ['auth:sanctum', 'ability:cataloging']], function 
         Route::group(['prefix' => 'archives'], function() {
             Route::get('materials/{type}', [ViewArchivesController::class, 'getMaterials']);
             Route::get('projects', [ViewArchivesController::class, 'getProjects']);
+
+            Route::get('{type}/id/{id}', [ViewArchivesController::class, 'getMaterial']);
 
             // By type
             Route::get('materials/{type}/type/{periodical_type}', [ViewArchivesController::class, 'getMaterialsByType']);

@@ -9,6 +9,7 @@ use Illuminate\Validation\Rule;
 use Exception;
 use Auth;
 use DB, Http, Str;
+use PhpParser\JsonDecoder;
 use Storage;
 
 class AuthController extends Controller
@@ -86,9 +87,9 @@ class AuthController extends Controller
                 array_push($abilities, $system);
 
             // CREATE TOKENS WITH ABILITIES
-            $token = $user->createToken('token-name', $abilities)->plainTextToken;
+            $token = $user->createToken(Str::title($system), $abilities)->plainTextToken;
 
-            if(!in_array('user', $roles)) {
+            if(!in_array('student', $roles)) {
                 $responseData = [
                     'token' => $token,
                     'id' => $user->id,
@@ -98,26 +99,52 @@ class AuthController extends Controller
                     'last_name' => $user->last_name,
                     'domain_account' => $user->domain_email,
                     'main_address' => $user->main_address,
-                    'department' => Program::where('program_short', $user->program)->value('department_short'),
                 ];
 
-                if(in_array($system, $abilities)) return response()->json($responseData, 200);
-                
-                else return response()->json(['message' => 'Unauthorized User'], 403);
+                if(in_array($system, $abilities)) {
 
-            
-                // $tokenModel = $user->tokens->last();
-                // $expiryTime = now()->addHour();
-                // $tokenModel->update(['expires_at' => $expiryTime]);
+                    $log = new ActivityLogController();
+    
+                    $logParam = new \stdClass(); // Instantiate stdClass
+    
+                    $user = $request->user();
+    
+                    $logParam->system = Str::title($system);
+                    $logParam->username = $user->username;
+                    $logParam->fullname = $user->first_name . ' ' . $user->middle_name . ' ' . $user->last_name . ' ' . $user->ext_name;
+                    $logParam->position = $user->position;
+                    $logParam->desc = 'Logged in GC-LMS ' . Str::title($system);
+    
+                    $log->savePersonnelLog($logParam);
+                    return response()->json($responseData, 200);
+                }
+                
+                else { 
+                    $log = new ActivityLogController();
+    
+                    $logParam = new \stdClass(); // Instantiate stdClass
+    
+                    $user = $request->user();
+    
+                    $logParam->system = Str::title($system);
+                    $logParam->username = $user->username;
+                    $logParam->fullname = $user->first_name . ' ' . $user->middle_name . ' ' . $user->last_name . ' ' . $user->ext_name;
+                    $logParam->position = $user->position;
+                    $logParam->desc = 'Attempted to log in GC-LMS ' . Str::title($system);
+    
+                    $log->savePersonnelLog($logParam);
+                    return response()->json(['message' => 'Unauthorized User'], 403);
+                };
 
                 
-            } else if(in_array('user', $roles)) {
+            } else if(in_array('student', $roles)) {
                 $student = User::with('student_program')->find($user->id);
                 
                 $responseData = [
                     'token' => $token,
                     'id' => $user->id,
                     'department' => $student->student_program->department_short,
+                    'program' => $student->program,
                     'first_name' => $user->first_name,
                     'last_name' => $user->last_name,
                     'middle_name' => $user->middle_name,
@@ -126,6 +153,18 @@ class AuthController extends Controller
                     'profile_picture' => self::URL .  Storage::url($user->profile_image)
                 ];
 
+                $log = new ActivityLogController();
+    
+                $logParam = new \stdClass(); // Instantiate stdClass
+
+                $logParam->system = 'Student Portal';
+                $logParam->username = $student->username;
+                $logParam->fullname = $student->first_name . ' ' . $student->middle_name . ' ' . $student->last_name . ' ' . $student->ext_name;
+                $logParam->program = $student->program;
+                $logParam->department = $student->student_program->department_short;
+                $logParam->desc = 'Logged in GC-LMS Student Portal';
+
+                $log->saveStudentLog($logParam);
                 return response()->json($responseData, 200);
             } else {
                 return response()->json(['message' => 'Unauthorized'], 403);
@@ -153,7 +192,32 @@ class AuthController extends Controller
 
     public function logout(Request $request) {
         try {
-            auth()->user()->tokens()->delete();
+            $user = auth()->user();
+            $system = $user->currentAccessToken()->name;
+            $abilities = $user->currentAccessToken()->abilities;
+
+            $user->currentAccessToken()->delete();
+
+            $log = new ActivityLogController();
+    
+            $logParam = new \stdClass(); // Instantiate stdClass
+
+            if(in_array('student', $abilities)) {
+                $student = User::with('student_program')->find($user->id);
+                $logParam->system = 'Student';
+                $logParam->program = $student->program;
+                $logParam->department = $student->student_program->department_short;
+                $logParam->desc = 'Logged Out of GC-LMS Student Portal';
+            } else {
+                $logParam->system = $system;
+                $logParam->position = $user->position;
+                $logParam->desc = 'Logged Out of GC-LMS ' . Str::title($system);
+            }
+
+            $logParam->username = $user->username;
+            $logParam->fullname = $user->first_name . ' ' . $user->middle_name . ' ' . $user->last_name . ' ' . $user->ext_name;
+
+            $log->savePersonnelLog($logParam);
             return response()->json(['Status' => 'Logged out successfully'], 200);
         } catch(Exception $e) {
             return response()->json(['Error' => $e->getMessage()], 400);

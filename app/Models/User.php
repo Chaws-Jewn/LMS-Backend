@@ -80,14 +80,10 @@ class User extends Authenticatable
         return $this->belongsTo(Program::class, 'program', 'program_short');
     }
 
-    public function department()
-    {
-        return $this->hasOneThrough(Department::class, Program::class, 'id', 'id', 'program_id', 'department_id');
-    }
-
     public function patron(){
         return $this->belongsTo(Patron::class);
     }
+    
     public function getRolesAttribute($value)
     {
         return json_decode($value, true);

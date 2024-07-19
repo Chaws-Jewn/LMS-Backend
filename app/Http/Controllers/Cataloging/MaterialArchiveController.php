@@ -150,6 +150,24 @@ class MaterialArchiveController extends Controller
         try {
             $delete = DB::connection('archives')->table('materials')->where('accession', $id);
             $model = $delete->first();
+
+            switch($model->material_type) {
+                case 0:
+                    $material_type = 'book';
+                    break;
+    
+                case 1:
+                    $material_type = 'periodical';
+                    break;
+    
+                case 2:
+                    $material_type = 'article';
+                    break;
+                
+                case 3: 
+                    $material_type = 'audio -visual';
+                    break;
+            }
         } catch (Exception $e) {
             return response()->json(['message' => 'Cannot find material'], 404);
         }
@@ -189,19 +207,6 @@ class MaterialArchiveController extends Controller
             $delete->delete();
         });
 
-        switch($model->material_type) {
-            case 0:
-                $material_type = 'book';
-                break;
-
-            case 1:
-                $material_type = 'periodical';
-                break;
-
-            case 2:
-                $material_type = 'article';
-                break;
-        }
         $log = new ActivityLogController();
 
         $logParam = new \stdClass(); // Instantiate stdClass
@@ -215,7 +220,6 @@ class MaterialArchiveController extends Controller
         $logParam->desc = 'Restored archived ' . $material_type . ' of accession ' . $id;
 
         $log->savePersonnelLog($logParam);
-
 
         return response()->json(['Response' => 'Record restored successfully'], 200);
     }
@@ -297,6 +301,10 @@ class MaterialArchiveController extends Controller
 
                     case 2:
                         $material_type = 'article';
+                        break;
+
+                    case 3:
+                        $material_type = 'audio-visual';
                         break;
                 }
             } else {

@@ -62,9 +62,9 @@ class ProjectController extends Controller
     // STUDENT
     public function getByType($department) {
         // for getting by departments -> student portal
-        $projects = Project::with(['program'])->orderByDesc('created_at')->get();
+        $projects = Project::with(['project_program'])->orderByDesc('created_at')->get(['accession', 'program', 'category', 'title', 'date_published', 'created_at']);
 
-        $projects = $projects->where('program', '=', $department);
+        $projects = $projects->where('program_program.department_short', '=', $department);
         
         $projects->each(function ($project) {
             $project->projectAuthors = $project->projectAuthors->sortBy('name')->values();

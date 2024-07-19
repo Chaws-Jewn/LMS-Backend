@@ -4,14 +4,12 @@ namespace App\Http\Controllers;
 
 use App\Models\Locker;
 use Illuminate\Http\Request;
-use App\Models\LockersLog;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Log;
-use App\Models\LockerLog;
 use Validator;
 use App\Models\User;
 use DateTime;
-use App\Models\LockerHistory;
+use App\Models\LockersHistory;
 
 
 class LockerController extends Controller
@@ -23,6 +21,20 @@ class LockerController extends Controller
         $fullname = property_exists($logDetails, 'fullname') ? $logDetails->fullname : 'Unknown';
         $studentNumber = property_exists($logDetails, 'studentNumber') ? $logDetails->studentNumber : 'Unknown';
 
+        $log = new ActivityLogController();
+
+        $logParam = new \stdClass(); // Instantiate stdClass
+
+        $user = $request->user();
+
+        $logParam->system = 'Cataloging';
+        $logParam->username = $user->username;
+        $logParam->fullname = $user->first_name . ' ' . $user->middle_name . ' ' . $user->last_name . ' ' . $user->ext_name;
+        $logParam->position = $user->position;
+        $logParam->desc = 'Updated book of accession ' . $model->accession;
+
+        $log->savePersonnelLog($logParam);
+        
         $logEntry = "{$logDetails->username};{$fullname};{$studentNumber};{$position};{$logDetails->program};{$logDetails->desc};{$logDetails->device}";
 
         Log::info($logEntry);
@@ -182,7 +194,7 @@ class LockerController extends Controller
         $locker = Locker::findOrFail($id);
 
         // Delete related records from lockers_logs
-        LockerHistory::where('locker_id', $id)->delete();
+        LockersHistory::where('locker_id', $id)->delete();
 
         // Set locker number in case it gets deleted
         $lockerNumber = $locker->locker_number;
@@ -245,7 +257,7 @@ class LockerController extends Controller
                     $locker->status = 'Available';
                     $locker->user_id = null;
 
-                    $log = LockerHistory::where('locker_id', $locker->id)->whereNull('time_out')->first();
+                    $log = LockersHistory::where('locker_id', $locker->id)->whereNull('time_out')->first();
                     if ($log) {
                         $log->update(['time_out' => Carbon::now()]);
                     }
@@ -292,7 +304,7 @@ class LockerController extends Controller
                 $occupiedLocker->status = 'Available';
                 $occupiedLocker->user_id = null;
 
-                $log = LockerHistory::where('locker_id', $occupiedLocker->id)->whereNull('time_out')->first();
+                $log = LockersHistory::where('locker_id', $occupiedLocker->id)->whereNull('time_out')->first();
                 if ($log) {
                     $log->update(['time_out' => Carbon::now()]);
                 }
@@ -320,7 +332,7 @@ class LockerController extends Controller
                 $locker->status = 'Available';
                 $locker->user_id = null;
 
-                $log = LockerHistory::where('locker_id', $locker->id)->whereNull('time_out')->first();
+                $log = LockersHistory::where('locker_id', $locker->id)->whereNull('time_out')->first();
                 if ($log) {
                     $log->update(['time_out' => Carbon::now()]);
                 }
@@ -340,7 +352,7 @@ class LockerController extends Controller
                 $locker->status = 'Occupied';
                 $locker->user_id = $user->id;
 
-                LockerHistory::create([
+                LockersHistory::create([
                     'locker_id' => $locker->id,
                     'user_id' => $user->id,
                     'time_in' => Carbon::now(),
@@ -389,7 +401,7 @@ class LockerController extends Controller
                     $locker->status = 'Available';
                     $locker->user_id = null;
 
-                    $log = LockerHistory::where('locker_id', $locker->id)->whereNull('time_out')->first();
+                    $log = LockersHistory::where('locker_id', $locker->id)->whereNull('time_out')->first();
                     if ($log) {
                         $log->update(['time_out' => Carbon::now()]);
                     }
@@ -451,7 +463,7 @@ class LockerController extends Controller
                 $locker->status = 'Available';
                 $locker->user_id = null;
 
-                $log = LockerHistory::where('user_id', $user->id)->whereNull('time_out')->first();
+                $log = LockersHistory::where('user_id', $user->id)->whereNull('time_out')->first();
                 if ($log) {
                     $log->update(['time_out' => Carbon::now()]);
                 }
@@ -478,7 +490,7 @@ class LockerController extends Controller
                 $locker->status = 'Occupied';
                 $locker->user_id = $user->id;
 
-                LockerHistory::create([
+                LockersHistory::create([
                     'locker_id' => $locker->id,
                     'user_id' => $user->id,
                     'time_in' => Carbon::now(),
@@ -515,12 +527,12 @@ class LockerController extends Controller
         $unavailable = Locker::where('status', 'unavailable')->count();
         $total = Locker::count();
 
-        $totalUsers = LockerHistory::distinct()->count('id');
+        $totalUsers = LockersHistory::distinct()->count('id');
 
         // Add filtering by days, weeks, and months for total users
-        $todayUsers = LockerHistory::whereDate('created_at', today())->distinct()->count('id');
-        $thisWeekUsers = LockerHistory::whereBetween('created_at', [now()->startOfWeek(), now()->endOfWeek()])->distinct()->count('id');
-        $thisMonthUsers = LockerHistory::whereBetween('created_at', [now()->startOfMonth(), now()->endOfMonth()])->distinct()->count('id');
+        $todayUsers = LockersHistory::whereDate('created_at', today())->distinct()->count('id');
+        $thisWeekUsers = LockersHistory::whereBetween('created_at', [now()->startOfWeek(), now()->endOfWeek()])->distinct()->count('id');
+        $thisMonthUsers = LockersHistory::whereBetween('created_at', [now()->startOfMonth(), now()->endOfMonth()])->distinct()->count('id');
 
         $counts = [
             'available' => $available,
@@ -549,7 +561,7 @@ class LockerController extends Controller
     {
         $period = $request->query('period');
 
-        $query = LockerHistory::selectRaw('count(*) as count, users.gender')
+        $query = LockersHistory::selectRaw('count(*) as count, users.gender')
             ->join('users', 'users.id', '=', 'lockers_history.user_id')
             ->groupBy('users.gender');
 
@@ -615,7 +627,7 @@ class LockerController extends Controller
     {
         $period = $request->query('period');
 
-        $query = LockerHistory::selectRaw('count(*) as count, users.gender')
+        $query = LockersHistory::selectRaw('count(*) as count, users.gender')
             ->join('users', 'users.id', '=', 'lockers_history.user_id')
             ->groupBy('users.gender');
 
@@ -716,7 +728,7 @@ class LockerController extends Controller
 
         foreach ($departments as $department) {
             // Count of records in lockers_history for each department
-            $departmentCount = LockerHistory::whereHas('user.program', function ($query) use ($department, $dateRange) {
+            $departmentCount = LockersHistory::whereHas('user.program', function ($query) use ($department, $dateRange) {
                 $query->where('department_short', $department);
                 if ($dateRange) {
                     $query->whereBetween('created_at', $dateRange);
@@ -724,7 +736,7 @@ class LockerController extends Controller
             })->count();
 
             // Program counts for each department
-            $programCounts = LockerHistory::whereHas('user.program', function ($query) use ($department, $dateRange) {
+            $programCounts = LockersHistory::whereHas('user.program', function ($query) use ($department, $dateRange) {
                 $query->where('department_short', $department);
                 if ($dateRange) {
                     $query->whereBetween('created_at', $dateRange);
@@ -739,7 +751,7 @@ class LockerController extends Controller
                 ->toArray();
 
             // Log the SQL query
-            $sql = LockerHistory::whereHas('user.program', function ($query) use ($department, $dateRange) {
+            $sql = LockersHistory::whereHas('user.program', function ($query) use ($department, $dateRange) {
                 $query->where('department_short', $department);
                 if ($dateRange) {
                     $query->whereBetween('created_at', $dateRange);
@@ -756,14 +768,14 @@ class LockerController extends Controller
 
         // Department counts
 
-        $ceasCount = LockerHistory::whereHas('user.program', function ($query) use ($dateRange) {
+        $ceasCount = LockersHistory::whereHas('user.program', function ($query) use ($dateRange) {
             $query->where('department_short', 'CEAS');
             if ($dateRange) {
                 $query->whereBetween('lockers_history.created_at', $dateRange);
             }
         })->count();
 
-        $chtmCount = LockerHistory::whereHas('user.program', function ($query) use ($dateRange) {
+        $chtmCount = LockersHistory::whereHas('user.program', function ($query) use ($dateRange) {
             $query->where('department_short', 'CHTM');
             if ($dateRange) {
                 $query->whereBetween('lockers_history.created_at', $dateRange);
@@ -771,21 +783,21 @@ class LockerController extends Controller
         })->count();
 
 
-        $cbaCount = LockerHistory::whereHas('user.program', function ($query) use ($dateRange) {
+        $cbaCount = LockersHistory::whereHas('user.program', function ($query) use ($dateRange) {
             $query->where('department_short', 'CBA');
             if ($dateRange) {
                 $query->whereBetween('lockers_history.created_at', $dateRange);
             }
         })->count();
 
-        $cahsCount = LockerHistory::whereHas('user.program', function ($query) use ($dateRange) {
+        $cahsCount = LockersHistory::whereHas('user.program', function ($query) use ($dateRange) {
             $query->where('department_short', 'CAHS');
             if ($dateRange) {
                 $query->whereBetween('lockers_history.created_at', $dateRange);
             }
         })->count();
 
-        $ccsCount = LockerHistory::whereHas('user.program', function ($query) use ($dateRange) {
+        $ccsCount = LockersHistory::whereHas('user.program', function ($query) use ($dateRange) {
             $query->where('department_short', 'CCS');
             if ($dateRange) {
                 $query->whereBetween('lockers_history.created_at', $dateRange);
@@ -797,91 +809,91 @@ class LockerController extends Controller
 
         // Program counts for CEAS department
         $ceasProgramCounts = [
-            'BACOMM' => LockerHistory::whereHas('user.program', function ($query) use ($dateRange) {
+            'BACOMM' => LockersHistory::whereHas('user.program', function ($query) use ($dateRange) {
                 $query->where('program', 'BACOMM');
                 if ($dateRange) {
                     $query->whereBetween('lockers_history.created_at', $dateRange);
                 }
             })->count(),
 
-            'BCAED' => LockerHistory::whereHas('user.program', function ($query) use ($dateRange) {
+            'BCAED' => LockersHistory::whereHas('user.program', function ($query) use ($dateRange) {
                 $query->where('program', 'BCAED');
                 if ($dateRange) {
                     $query->whereBetween('lockers_history.created_at', $dateRange);
                 }
             })->count(),
 
-            'BECED' => LockerHistory::whereHas('user.program', function ($query) use ($dateRange) {
+            'BECED' => LockersHistory::whereHas('user.program', function ($query) use ($dateRange) {
                 $query->where('program', 'BECED');
                 if ($dateRange) {
                     $query->whereBetween('lockers_history.created_at', $dateRange);
                 }
             })->count(),
 
-            'BEED' => LockerHistory::whereHas('user.program', function ($query) use ($dateRange) {
+            'BEED' => LockersHistory::whereHas('user.program', function ($query) use ($dateRange) {
                 $query->where('program', 'BEED');
                 if ($dateRange) {
                     $query->whereBetween('lockers_history.created_at', $dateRange);
                 }
             })->count(),
 
-            'BPED' => LockerHistory::whereHas('user.program', function ($query) use ($dateRange) {
+            'BPED' => LockersHistory::whereHas('user.program', function ($query) use ($dateRange) {
                 $query->where('program', 'BPED');
                 if ($dateRange) {
                     $query->whereBetween('lockers_history.created_at', $dateRange);
                 }
             })->count(),
 
-            'BSEDBIO' => LockerHistory::whereHas('user.program', function ($query)  use ($dateRange) {
+            'BSEDBIO' => LockersHistory::whereHas('user.program', function ($query)  use ($dateRange) {
                 $query->where('program', 'BSED-BIO');
                 if ($dateRange) {
                     $query->whereBetween('lockers_history.created_at', $dateRange);
                 }
             })->count(),
 
-            'BSEDENG' => LockerHistory::whereHas('user.program', function ($query)  use ($dateRange) {
+            'BSEDENG' => LockersHistory::whereHas('user.program', function ($query)  use ($dateRange) {
                 $query->where('program', 'BSED-ENG');
                 if ($dateRange) {
                     $query->whereBetween('lockers_history.created_at', $dateRange);
                 }
             })->count(),
 
-            'BSEDFIL' => LockerHistory::whereHas('user.program', function ($query) use ($dateRange) {
+            'BSEDFIL' => LockersHistory::whereHas('user.program', function ($query) use ($dateRange) {
                 $query->where('program', 'BSED-FIL');
                 if ($dateRange) {
                     $query->whereBetween('lockers_history.created_at', $dateRange);
                 }
             })->count(),
 
-            'BSEDMATH' => LockerHistory::whereHas('user.program', function ($query) use ($dateRange) {
+            'BSEDMATH' => LockersHistory::whereHas('user.program', function ($query) use ($dateRange) {
                 $query->where('program', 'BSED-MATH');
                 if ($dateRange) {
                     $query->whereBetween('lockers_history.created_at', $dateRange);
                 }
             })->count(),
 
-            'BSEDMAPEH' => LockerHistory::whereHas('user.program', function ($query)  use ($dateRange) {
+            'BSEDMAPEH' => LockersHistory::whereHas('user.program', function ($query)  use ($dateRange) {
                 $query->where('program', 'BSED-MAPEH');
                 if ($dateRange) {
                     $query->whereBetween('lockers_history.created_at', $dateRange);
                 }
             })->count(),
 
-            'BSEDSCI' => LockerHistory::whereHas('user.program', function ($query) use ($dateRange) {
+            'BSEDSCI' => LockersHistory::whereHas('user.program', function ($query) use ($dateRange) {
                 $query->where('program', 'BSED-SCI');
                 if ($dateRange) {
                     $query->whereBetween('lockers_history.created_at', $dateRange);
                 }
             })->count(),
 
-            'BSEDSOC' => LockerHistory::whereHas('user.program', function ($query) use ($dateRange) {
+            'BSEDSOC' => LockersHistory::whereHas('user.program', function ($query) use ($dateRange) {
                 $query->where('program', 'BSED-SOC');
                 if ($dateRange) {
                     $query->whereBetween('lockers_history.created_at', $dateRange);
                 }
             })->count(),
 
-            'BSEDPROFED' => LockerHistory::whereHas('user.program', function ($query) use ($dateRange) {
+            'BSEDPROFED' => LockersHistory::whereHas('user.program', function ($query) use ($dateRange) {
                 $query->where('program', 'BSED-PROFED');
                 if ($dateRange) {
                     $query->whereBetween('lockers_history.created_at', $dateRange);
@@ -892,24 +904,24 @@ class LockerController extends Controller
 
         // Program counts for CHTM department
         $chtmProgramCounts = [
-            // 'BSHM' =>LockerHistory::where('collegeDepartment', 'CHTM')->where('collegeProgram', 'BSHM')->count(),
-            'BSHM' => LockerHistory::whereHas('user.program', function ($query) use ($dateRange) {
+            // 'BSHM' =>LockersHistory::where('collegeDepartment', 'CHTM')->where('collegeProgram', 'BSHM')->count(),
+            'BSHM' => LockersHistory::whereHas('user.program', function ($query) use ($dateRange) {
                 $query->where('program', 'BSHM');
                 if ($dateRange) {
                     $query->whereBetween('lockers_history.created_at', $dateRange);
                 }
             })->count(),
 
-            // 'BSHRM' =>LockerHistory::where('collegeDepartment', 'CHTM')->where('collegeProgram', 'BSHRM')->count(),
-            'BSHRM' => LockerHistory::whereHas('user.program', function ($query) use ($dateRange) {
+            // 'BSHRM' =>LockersHistory::where('collegeDepartment', 'CHTM')->where('collegeProgram', 'BSHRM')->count(),
+            'BSHRM' => LockersHistory::whereHas('user.program', function ($query) use ($dateRange) {
                 $query->where('program', 'BSHRM');
                 if ($dateRange) {
                     $query->whereBetween('lockers_history.created_at', $dateRange);
                 }
             })->count(),
 
-            // 'BSTM' =>LockerHistory::where('collegeDepartment', 'CHTM')->where('collegeProgram', 'BSTM')->count(),
-            'BSTM' => LockerHistory::whereHas('user.program', function ($query)  use ($dateRange) {
+            // 'BSTM' =>LockersHistory::where('collegeDepartment', 'CHTM')->where('collegeProgram', 'BSTM')->count(),
+            'BSTM' => LockersHistory::whereHas('user.program', function ($query)  use ($dateRange) {
                 $query->where('program', 'BSTM');
                 if ($dateRange) {
                     $query->whereBetween('lockers_history.created_at', $dateRange);
@@ -919,14 +931,14 @@ class LockerController extends Controller
 
         // Program counts for CBA department
         $cbaProgramCounts = [
-            'BSA' => LockerHistory::whereHas('user.program', function ($query) use ($dateRange) {
+            'BSA' => LockersHistory::whereHas('user.program', function ($query) use ($dateRange) {
                 $query->where('program', 'BSA');
                 if ($dateRange) {
                     $query->whereBetween('lockers_history.created_at', $dateRange);
                 }
             })->count(),
 
-            'BSBAFM' => LockerHistory::whereHas('user.program', function ($query) use ($dateRange) {
+            'BSBAFM' => LockersHistory::whereHas('user.program', function ($query) use ($dateRange) {
                 $query->where('program', 'BSBA-FM');
 
                 if ($dateRange) {
@@ -934,7 +946,7 @@ class LockerController extends Controller
                 }
             })->count(),
 
-            'BSBAHRM' => LockerHistory::whereHas('user.program', function ($query) use ($dateRange) {
+            'BSBAHRM' => LockersHistory::whereHas('user.program', function ($query) use ($dateRange) {
                 $query->where('program', 'BSBA-HRM');
 
                 if ($dateRange) {
@@ -942,7 +954,7 @@ class LockerController extends Controller
                 }
             })->count(),
 
-            'BSBAMKT' => LockerHistory::whereHas('user.program', function ($query) use ($dateRange) {
+            'BSBAMKT' => LockersHistory::whereHas('user.program', function ($query) use ($dateRange) {
                 $query->where('program', 'BSBA-MKT');
 
                 if ($dateRange) {
@@ -950,7 +962,7 @@ class LockerController extends Controller
                 }
             })->count(),
 
-            'BSCA' => LockerHistory::whereHas('user.program', function ($query) use ($dateRange) {
+            'BSCA' => LockersHistory::whereHas('user.program', function ($query) use ($dateRange) {
                 $query->where('program', 'BSCA');
 
                 if ($dateRange) {
@@ -961,14 +973,14 @@ class LockerController extends Controller
 
         // Program counts for CAHS department
         $cahsProgramCounts = [
-            'BSM' => LockerHistory::whereHas('user.program', function ($query)  use ($dateRange) {
+            'BSM' => LockersHistory::whereHas('user.program', function ($query)  use ($dateRange) {
                 $query->where('program', 'BSM');
                 if ($dateRange) {
                     $query->whereBetween('lockers_history.created_at', $dateRange);
                 }
             })->count(),
 
-            'BSN' => LockerHistory::whereHas('user.program', function ($query)  use ($dateRange) {
+            'BSN' => LockersHistory::whereHas('user.program', function ($query)  use ($dateRange) {
                 $query->where('program', 'BSN');
                 if ($dateRange) {
                     $query->whereBetween('lockers_history.created_at', $dateRange);
@@ -978,15 +990,15 @@ class LockerController extends Controller
 
         // Program counts for CCS department
         $ccsProgramCounts = [
-            // 'BSCS' =>LockerHistory::where('collegeDepartment', 'CCS')->where('collegeProgram', 'BSCS')->count(),
-            'BSCS' => LockerHistory::whereHas('user.program', function ($query) use ($dateRange) {
+            // 'BSCS' =>LockersHistory::where('collegeDepartment', 'CCS')->where('collegeProgram', 'BSCS')->count(),
+            'BSCS' => LockersHistory::whereHas('user.program', function ($query) use ($dateRange) {
                 $query->where('program', 'BSCS');
                 if ($dateRange) {
                     $query->whereBetween('lockers_history.created_at', $dateRange);
                 }
             })->count(),
 
-            'BSIT' => LockerHistory::whereHas('user.program', function ($query) use ($dateRange) {
+            'BSIT' => LockersHistory::whereHas('user.program', function ($query) use ($dateRange) {
                 $query->where('program', 'BSIT');
                 if ($dateRange) {
                     $query->whereBetween('lockers_history.created_at', $dateRange);
@@ -994,16 +1006,16 @@ class LockerController extends Controller
             })->count(),
 
 
-            // 'BSEMC' =>LockerHistory::where('collegeDepartment', 'CCS')->where('collegeProgram', 'BSEMC')->count(),
-            'BSEMC' => LockerHistory::whereHas('user.program', function ($query)  use ($dateRange) {
+            // 'BSEMC' =>LockersHistory::where('collegeDepartment', 'CCS')->where('collegeProgram', 'BSEMC')->count(),
+            'BSEMC' => LockersHistory::whereHas('user.program', function ($query)  use ($dateRange) {
                 $query->where('program', 'BSEMC');
                 if ($dateRange) {
                     $query->whereBetween('lockers_history.created_at', $dateRange);
                 }
             })->count(),
 
-            // 'ACT' => LockerHistory::where('collegeDepartment', 'CCS')->where('collegeProgram', 'ACT')->count(),
-            'ACT' => LockerHistory::whereHas('user.program', function ($query)  use ($dateRange) {
+            // 'ACT' => LockersHistory::where('collegeDepartment', 'CCS')->where('collegeProgram', 'ACT')->count(),
+            'ACT' => LockersHistory::whereHas('user.program', function ($query)  use ($dateRange) {
                 $query->where('program', 'ACT');
                 if ($dateRange) {
                     $query->whereBetween('lockers_history.created_at', $dateRange);
