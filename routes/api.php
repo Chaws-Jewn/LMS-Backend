@@ -20,6 +20,7 @@ App\Http\Controllers\Cataloging\BookController, App\Http\Controllers\Cataloging\
 App\Http\Controllers\Cataloging\CatalogingReportController, App\Http\Controllers\Cataloging\MaterialArchiveController;
 
 use App\Http\Controllers\BorrowBookController, App\Http\Controllers\ReservationController;
+use App\Http\Controllers\Cataloging\ViewArchivesController;
 
 use App\Http\Controllers\LockerController;
 
@@ -104,29 +105,40 @@ Route::middleware(['auth:sanctum', 'ability:maintenance'])->group(function () {
 
     Route::prefix('analytics')->group(function() {
         //Analytics Api
-        Route::get('/total-lockers', [AnalyticsController::class, 'totalLockers']);
-        Route::get('/locker-user-by-department', [AnalyticsController::class, 'lockerUsersByDepartment']);
-        Route::get('/total-active-users', [AnalyticsController::class, 'getTotalActiveUsers']);
-        Route::get('/total-users-per-department', [AnalyticsController::class, 'getTotalUsersPerDepartment']);
 
-        //cataloging
-        Route::get('/total-materials', [AnalyticsController::class, 'getTotalMaterials']);
-
-        Route::get('/total-projects', [AnalyticsController::class, 'getTotalProjects']);
-        Route::get('/total-borrowed', [AnalyticsController::class, 'getTotalBorrowed']);
-
+        
+        //circu
         Route::get('/available-books', [AnalyticsController::class, 'getAvailableBooks']);
         Route::get('/unreturned-books', [AnalyticsController::class, 'getUnreturnedBooks']);
         Route::get('/missing-books', [AnalyticsController::class, 'getMissingBooks']);
-        Route::get('/most-borrowed-books', [AnalyticsController::class, 'mostBorrowedBooks']);
-        Route::get('/most-borrowed-books-by-department', [AnalyticsController::class, 'mostBorrowedBooksByDepartment']);
-        Route::get('/top-borrowers', [AnalyticsController::class, 'topBorrowers']);
-        Route::get('/total-unavailable-books', [AnalyticsController::class, 'totalUnavailableBooks']);
-        Route::get('/total-occupied-books', [AnalyticsController::class, 'totalOccupiedBooks']);
+        Route::get('/borrow-history', [AnalyticsController::class, 'getBorrowHistory']);
+        
+        
+        //cataloging
+        Route::get('/total-materials', [AnalyticsController::class, 'getTotalMaterials']);
+        Route::get('/total-projects', [AnalyticsController::class, 'getTotalProjects']);
+
+        //locker
+        Route::get('/total-lockers', [AnalyticsController::class, 'totalLockers']);
+        Route::get('/locker-user-by-department', [AnalyticsController::class, 'lockerUsersByDepartment']);
+
+        
+        // Route::get('/total-active-users', [AnalyticsController::class, 'getTotalActiveUsers']);
+        // Route::get('/total-users-per-department', [AnalyticsController::class, 'getTotalUsersPerDepartment']);
+
+
+        // Route::get('/total-borrowed', [AnalyticsController::class, 'getTotalBorrowed']);
+
+
+        // Route::get('/most-borrowed-books', [AnalyticsController::class, 'mostBorrowedBooks']);
+        // Route::get('/most-borrowed-books-by-department', [AnalyticsController::class, 'mostBorrowedBooksByDepartment']);
+        // Route::get('/top-borrowers', [AnalyticsController::class, 'topBorrowers']);
+        // Route::get('/total-unavailable-books', [AnalyticsController::class, 'totalUnavailableBooks']);
+        // Route::get('/total-occupied-books', [AnalyticsController::class, 'totalOccupiedBooks']);
         // Route::get('/total-periodicals', [AnalyticsController::class, 'getTotalPeriodicals']);
         // Route::get('/total-articles', [AnalyticsController::class, 'getTotalArticles']);
         // Route::get('/total-projects-by-department', [AnalyticsController::class, 'getTotalProjectsByDepartment']);
-        Route::get('/locker-visits', [AnalyticsController::class, 'getLockerVisits']);
+        // Route::get('/locker-visits', [AnalyticsController::class, 'getLockerVisits']);
     });
 });
 
@@ -161,8 +173,15 @@ Route::group(['middleware' => ['auth:sanctum', 'ability:cataloging']], function 
         });
 
         // ARCHIVE Materials
-        Route::delete('material/archive/{id}', [MaterialArchiveController::class, 'store']);
-        Route::delete('project/archive/{id}', [ProjectController::class, 'archive']);
+        Route::delete('materials/archive/{id}', [MaterialArchiveController::class, 'storeMaterial']);
+        Route::delete('projects/archive/{id}', [MaterialArchiveController::class, 'storeProject']);
+
+        // RESTORE Materials
+        Route::post('materials/restore/{id}', [MaterialArchiveController::class, 'restoreMaterial']);
+        Route::post('projects/restore/{id}', [MaterialArchiveController::class, 'restoreProject']);
+
+        //PERMANENTLY DELETE
+        Route::delete('permanently-delete/{type}/{id}', [MaterialArchiveController::class, 'deleteMaterial']);
 
         // MATERIAL VIEWING
         Route::get('books/locations', [LocationController::class, 'getLocations']);
@@ -177,6 +196,15 @@ Route::group(['middleware' => ['auth:sanctum', 'ability:cataloging']], function 
         Route::post('projects/process', [ProjectController::class, 'add']);
         Route::put('projects/process/{id}', [ProjectController::class, 'update']);
 
+        // ARCHIVE VIEWING
+        Route::group(['prefix' => 'archives'], function() {
+            Route::get('materials/{type}', [ViewArchivesController::class, 'getMaterials']);
+            Route::get('projects', [ViewArchivesController::class, 'getProjects']);
+
+            // By type
+            Route::get('materials/{type}/type/{periodical_type}', [ViewArchivesController::class, 'getMaterialsByType']);
+        });
+        
         // Get programs
         Route::get('programs', [ProgramController::class, 'get']);
     });

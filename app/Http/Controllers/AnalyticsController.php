@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\BorrowMaterial;
 use App\Models\Locker;
 use App\Models\Material;
 use App\Models\Project;
@@ -30,24 +31,34 @@ class AnalyticsController extends Controller
         return $usersByDepartments;
     }
 
-    public function getTotalActiveUsers()
-    {
-        $totalActiveUsers = DB::table('lockers')->where('status', 1)->count();
+    public function getBorrowHistory() {
+        $borrowHistory = BorrowMaterial::join('materials', 'materials.accession', 'borrow_materials.book_id')
+                                        ->join('users', 'users.id', '=', 'borrow_materials.user_id')
+                                        ->join('programs', 'users.program', '=', 'programs.program_short')
+                                        ->select('users.id', 'users.first_name', 'users.last_name', 'programs.department_short', 'materials.title', 'borrow_materials.borrow_date')
+                                        ->where('borrow_materials.date_returned', null)
+                                        ->get();
 
-        return response()->json(['total_active_users' => $totalActiveUsers]);
+        return $borrowHistory;
     }
+    // public function getTotalActiveUsers()
+    // {
+    //     $totalActiveUsers = DB::table('lockers')->where('status', 1)->count();
 
-    public function getTotalUsersPerDepartment()
-    {
-            $usersPerDepartment = DB::table('users')
-                ->join('programs', 'users.program', '=', 'programs.program_short')
-                ->select('programs.department_short', DB::raw('COUNT(users.id) as user_count'))
-                ->groupBy('programs.department_short')
-                ->get();
+    //     return response()->json(['total_active_users' => $totalActiveUsers]);
+    // }
 
-            return response()->json($usersPerDepartment);
+    // public function getTotalUsersPerDepartment()
+    // {
+    //         $usersPerDepartment = DB::table('users')
+    //             ->join('programs', 'users.program', '=', 'programs.program_short')
+    //             ->select('programs.department_short', DB::raw('COUNT(users.id) as user_count'))
+    //             ->groupBy('programs.department_short')
+    //             ->get();
 
-    }
+    //         return response()->json($usersPerDepartment);
+
+    // }
 
     public function getTotalMaterials() {
         $materials = Material::select('material_type', DB::raw('count(*) as total'))
@@ -170,45 +181,48 @@ class AnalyticsController extends Controller
         }
     }
 
-    public function mostBorrowedBooks()
-    {
-        $mostBorrowedBooks = DB::table('borrow_materials')
-            ->join('materials', 'borrow_materials.book_id', '=', 'materials.accession')
-            ->select('materials.title', DB::raw('COUNT(borrow_materials.book_id) as borrow_count'))
-            ->groupBy('materials.title')
-            ->orderBy('borrow_count', 'desc')
-            ->limit(10)
-            ->get();
+    // public function mostBorrowedBooks()
+    // {
+    //     $mostBorrowedBooks = DB::table('borrow_materials')
+    //         ->join('materials', 'borrow_materials.book_id', '=', 'materials.accession')
+    //         ->select('materials.title', DB::raw('COUNT(borrow_materials.book_id) as borrow_count'))
+    //         ->groupBy('materials.title')
+    //         ->orderBy('borrow_count', 'desc')
+    //         ->limit(10)
+    //         ->get();
 
-        return response()->json($mostBorrowedBooks);
-    }
-    public function mostBorrowedBooksByDepartment()
-    {
-        $mostBorrowedBooksByDepartment = DB::table('borrow_materials')
-            ->join('materials', 'borrow_materials.book_id', '=', 'materials.accession')
-            ->join('users', 'borrow_materials.user_id', '=', 'users.id')
-            ->join('programs', 'users.program', '=', 'programs.program_short')
-            ->select('programs.department_short', 'materials.title', DB::raw('COUNT(borrow_materials.book_id) as borrow_count'))
-            ->groupBy('programs.department_short', 'materials.title')
-            ->orderBy('programs.department_short')
-            ->orderBy('borrow_count', 'desc')
-            ->limit(10)
-            ->get();
+    //     return response()->json($mostBorrowedBooks);
+    // }
 
-        return response()->json($mostBorrowedBooksByDepartment);
-    }
-    public function topBorrowers()
-    {
-        $topBorrowers = DB::table('borrow_materials')
-            ->join('users', 'borrow_materials.user_id', '=', 'users.id')
-            ->select('users.id', 'users.username', DB::raw('COUNT(borrow_materials.book_id) as books_borrowed'), DB::raw('MAX(borrow_materials.borrow_date) as last_borrow_date'))
-            ->groupBy('users.id', 'users.username')
-            ->orderBy('books_borrowed', 'desc')
-            ->limit(10)
-            ->get();
+    // public function mostBorrowedBooksByDepartment()
+    // {
+    //     $mostBorrowedBooksByDepartment = DB::table('borrow_materials')
+    //         ->join('materials', 'borrow_materials.book_id', '=', 'materials.accession')
+    //         ->join('users', 'borrow_materials.user_id', '=', 'users.id')
+    //         ->join('programs', 'users.program', '=', 'programs.program_short')
+    //         ->select('programs.department_short', 'materials.title', DB::raw('COUNT(borrow_materials.book_id) as borrow_count'))
+    //         ->groupBy('programs.department_short', 'materials.title')
+    //         ->orderBy('programs.department_short')
+    //         ->orderBy('borrow_count', 'desc')
+    //         ->limit(10)
+    //         ->get();
 
-        return response()->json($topBorrowers);
-    }
+    //     return response()->json($mostBorrowedBooksByDepartment);
+    // }
+
+    // public function topBorrowers()
+    // {
+    //     $topBorrowers = DB::table('borrow_materials')
+    //         ->join('users', 'borrow_materials.user_id', '=', 'users.id')
+    //         ->select('users.id', 'users.username', DB::raw('COUNT(borrow_materials.book_id) as books_borrowed'), DB::raw('MAX(borrow_materials.borrow_date) as last_borrow_date'))
+    //         ->groupBy('users.id', 'users.username')
+    //         ->orderBy('books_borrowed', 'desc')
+    //         ->limit(10)
+    //         ->get();
+
+    //     return response()->json($topBorrowers);
+    // }
+
     // public function getTotalPeriodicals()
     // {
     //     $totalPeriodicals = DB::table('materials')
@@ -237,14 +251,15 @@ class AnalyticsController extends Controller
 
     //     return response()->json($totalProjectsByDepartment);
     // }
-    public function getLockerVisits()
-    {
-        $lockerVisits = DB::table('lockers_logs')
-            ->select('user_id', DB::raw('count(id) as visits'))
-            ->groupBy('user_id')
-            ->get();
 
-        return response()->json($lockerVisits);
-    }
+    // public function getLockerVisits()
+    // {
+    //     $lockerVisits = DB::table('lockers_logs')
+    //         ->select('user_id', DB::raw('count(id) as visits'))
+    //         ->groupBy('user_id')
+    //         ->get();
+
+    //     return response()->json($lockerVisits);
+    // }
 
 }

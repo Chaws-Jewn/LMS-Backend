@@ -17,6 +17,7 @@ class BookController extends Controller
     const URL = 'http://127.0.0.1:8000';
 
     public function add(Request $request) {
+        $accessions = [];
         $request->validate([
             'accession' => 'nullable|string|max:20',
             'title' => 'required|string|max:255',
@@ -57,6 +58,7 @@ class BookController extends Controller
                         $model->accession = $request->accession;
                     }
 
+                    array_push($accessions, $model->accession);
                 } catch (Exception) {
                     return response()->json(['Error' => 'Invalid form request. Check values if on correct data format.', 400]);
                 }
@@ -86,6 +88,7 @@ class BookController extends Controller
                 $model->save();
             }
         }
+
         $log = new ActivityLogController();
 
         $logParam = new \stdClass(); // Instantiate stdClass
@@ -96,7 +99,9 @@ class BookController extends Controller
         $logParam->username = $user->username;
         $logParam->fullname = $user->first_name . ' ' . $user->middle_name . ' ' . $user->last_name . ' ' . $user->ext_name;
         $logParam->position = $user->position;
-        $logParam->desc = 'Added book of accession ' . $request->accession;
+
+        if(count($accessions) == 1) $logParam->desc = 'Added book of accession ' . $request->accession;
+        else $logParam->desc = 'Added books of accessions ' . $accessions[0] . ' - ' . $accessions[count($accessions) -  1];
 
         $log->savePersonnelLog($logParam);
         

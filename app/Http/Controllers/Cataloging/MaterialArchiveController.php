@@ -7,10 +7,12 @@ use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\DB;
 use App\Models\Material;
 use App\Http\Controllers\ActivityLogController;
+use App\Models\Project;
+use Exception;
 
 class MaterialArchiveController extends Controller
 {
-    public function store(Request $request, $id) {
+    public function storeMaterial(Request $request, $id) {
         $model = Material::findOrFail($id);
         $accession = $model->accession;
 
@@ -70,7 +72,7 @@ class MaterialArchiveController extends Controller
 
         $logParam = new \stdClass(); // Instantiate stdClass
 
-        if($type == 'Periodical' || $type == 'Article') {
+        if($type == 'periodical' || $type == 'article') {
             switch($model->periodical_type) {
                 case 0:
                     $perioType = 'journal ';
@@ -100,13 +102,60 @@ class MaterialArchiveController extends Controller
         $log->savePersonnelLog($logParam);
 
         return response()->json(['Response' => 'Record archived successfully'], 200);
+    }    
+
+    public function storeProject(Request $request, $id) {
+        
+        $model = Project::findOrFail($id);
+
+        DB::transaction(function () use ($model, $id) {
+            DB::connection('archives')->table('academic_projects')->insert([
+                'accession' => $model->accession,
+                'category' => $model->category,
+                'title' => $model->title,
+                'authors' => $model->authors,
+                'program' => $model->program,
+                'image_url' => $model->image_url,
+                'date_published' => $model->date_published,
+                'keywords' => $model->keywords,
+                'language' => $model->language,
+                'abstract' => $model->abstract,
+                'created_at' => $model->created_at,
+                'archived_at' => now()
+            ]);
+            
+            $model->delete();
+        });
+
+        
+        $log = new ActivityLogController();
+
+        $logParam = new \stdClass(); // Instantiate stdClass
+
+        $user = $request->user();
+
+        $logParam->system = 'Cataloging';
+        $logParam->username = $user->username;
+        $logParam->fullname = $user->first_name . ' ' . $user->middle_name . ' ' . $user->last_name . ' ' . $user->ext_name;
+        $logParam->position = $user->position;
+        $logParam->desc = 'Archived project of accession ' . $id;
+
+        $log->savePersonnelLog($logParam);
+
+        return response()->json(['Response' => 'Record archived successfully'], 200);
     }
 
-    public function revert(Request $request, $id) {
-        DB::transaction(function () use ($id) {
-            $model = Material::findOrFail($id);
 
-            DB::connection('archives')->delete('DELETE FROM materials WHERE accession = ?', [$id]);
+    public function restoreMaterial(Request $request, $id) {
+        try {
+            $delete = DB::connection('archives')->table('materials')->where('accession', $id);
+            $model = $delete->first();
+        } catch (Exception $e) {
+            return response()->json(['message' => 'Cannot find material'], 404);
+        }
+
+        DB::transaction(function () use ($model, $delete) {
+            
 
             Material::insert([
                 'accession' => $model->accession,
@@ -134,10 +183,146 @@ class MaterialArchiveController extends Controller
                 'subject' => $model->subject,
                 'abstract' => $model->abstract,
                 'created_at' => $model->created_at,
-                'archived_at' => now()
+                'updated_at' => now()
             ]);
+
+            $delete->delete();
         });
 
-        return response()->json(['Response' => 'Record archived successfully'], 200);
+        switch($model->material_type) {
+            case 0:
+                $material_type = 'book';
+                break;
+
+            case 1:
+                $material_type = 'periodical';
+                break;
+
+            case 2:
+                $material_type = 'article';
+                break;
+        }
+        $log = new ActivityLogController();
+
+        $logParam = new \stdClass(); // Instantiate stdClass
+
+        $user = $request->user();
+
+        $logParam->system = 'Cataloging';
+        $logParam->username = $user->username;
+        $logParam->fullname = $user->first_name . ' ' . $user->middle_name . ' ' . $user->last_name . ' ' . $user->ext_name;
+        $logParam->position = $user->position;
+        $logParam->desc = 'Restored archived ' . $material_type . ' of accession ' . $id;
+
+        $log->savePersonnelLog($logParam);
+
+
+        return response()->json(['Response' => 'Record restored successfully'], 200);
+    }
+
+    public function restoreProject(Request $request, $id) {
+        
+        DB::transaction(function () use ($id) {
+            try {
+                $delete = DB::connection('archives')->table('academic_projects')->where('accession', $id);
+                $model = $delete->first();
+            } catch (Exception $e) {
+                return response()->json(['message' => 'Cannot find material'], 404);
+            }
+
+            Project::insert([
+                'accession' => $model->accession,
+                'category' => $model->category,
+                'title' => $model->title,
+                'authors' => $model->authors,
+                'program' => $model->program,
+                'image_url' => $model->image_url,
+                'date_published' => $model->date_published,
+                'keywords' => $model->keywords,
+                'language' => $model->language,
+                'abstract' => $model->abstract,
+                'created_at' => $model->created_at,
+                'updated_at' => now()
+            ]);
+            
+            $delete->delete();
+        });
+        
+        $log = new ActivityLogController();
+
+        $logParam = new \stdClass(); // Instantiate stdClass
+
+        $user = $request->user();
+
+        $logParam->system = 'Cataloging';
+        $logParam->username = $user->username;
+        $logParam->fullname = $user->first_name . ' ' . $user->middle_name . ' ' . $user->last_name . ' ' . $user->ext_name;
+        $logParam->position = $user->position;
+        $logParam->desc = 'Restored archived project of accession ' . $id;
+
+        $log->savePersonnelLog($logParam);
+
+        return response()->json(['Response' => 'Record restored successfully'], 200);
+    }
+
+    //PERMANENTLY DELETE
+    public function deleteMaterial(Request $request, String $type, String $id) {
+        try {
+            switch($type) {
+                case 'materials':
+                    $model = DB::connection('archives')->table('materials')->where('accession', $id);
+                    break;
+
+                case 'projects':
+                    $model = DB::connection('archives')->table('academic_projects')->where('accession', $id);
+                    break;
+
+                default:
+                    return response()->json(['message' => 'Type does not exist'], 200);
+            }
+        } catch (Exception $e) {
+            return response()->json(['message' => 'Cannot find record'], 200);
+        }
+        
+        try {
+            if($type == 'materials') {
+                switch($model->first()->material_type) {
+                    case 0:
+                        $material_type = 'book';
+                        break;
+
+                    case 1:
+                        $material_type = 'periodical';
+                        break;
+
+                    case 2:
+                        $material_type = 'article';
+                        break;
+                }
+            } else {
+                $material_type = 'project';
+            }
+
+            $accession = $model->first()->accession;
+            $model->delete();
+            
+            $log = new ActivityLogController();
+
+            $logParam = new \stdClass(); // Instantiate stdClass
+    
+            $user = $request->user();
+    
+            $logParam->system = 'Cataloging';
+            $logParam->username = $user->username;
+            $logParam->fullname = $user->first_name . ' ' . $user->middle_name . ' ' . $user->last_name . ' ' . $user->ext_name;
+            $logParam->position = $user->position;
+            $logParam->desc = 'Permanently deleted ' . $material_type . ' of accession ' . $accession;
+    
+            $log->savePersonnelLog($logParam);
+
+            return response()->json(['message' => 'Record permanently deleted'], 200);
+        } catch (Exception $e) {
+            return response()->json(['message' => 'Cannot delete record.'], 400);
+        }
     }
 }
