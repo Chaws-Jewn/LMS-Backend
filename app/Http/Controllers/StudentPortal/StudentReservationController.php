@@ -67,7 +67,7 @@ class StudentReservationController extends Controller
             DB::beginTransaction();
             try {
                 // Check if the user already has an active reservation for this book
-                $existingReservation = Reservation::where('book_id', $payload['book_id'])
+                $existingReservation = Reservation::where('user_id', $payload['book_id'])
                     ->where('status', 0) // Active reservation status
                     ->exists();
     
@@ -108,21 +108,84 @@ class StudentReservationController extends Controller
             return response()->json(['error' => 'An error occurred while processing the reservation', 'details' => $e->getMessage()], 500);
         }
     }
+
+    public function getQueuePosition(Request $request) 
+    {
+        // Get the authenticated user's ID
+        $userId = $request->user()->id;
+    
+        // Fetch all active reservations for the user's books
+        $userReservations = Reservation::where('user_id', $userId)
+                            ->where('status', '=', 0) // Exclude reservations with status 0
+                            ->orderBy('reserve_date')
+                            ->get(['book_id', 'reserve_date']);
+    
+        // Initialize the queue positions
+        $queuePositions = [];
+    
+        // Process the user's reservations and determine the queue position for each book
+        foreach ($userReservations as $userReservation) {
+            $bookId = $userReservation->book_id;
+    
+            // Count the number of reservations with earlier start dates for the same book
+            $position = Reservation::where('book_id', $bookId)
+                            ->where('reserve_date', '<', $userReservation->reserve_date)
+                            ->where('status', '=', 0) // Exclude reservations with status 0
+                            ->count() + 1; // Add 1 to start positions from 1
+    
+            // Assign the queue position for the book
+            $queuePositions[$bookId] = $position;
+        }
+    
+        return response()->json($queuePositions);
+    }
     
 
     //get reservation for user 
 
     public function getReservationsByUserId($user_id)
-    {
-        try {
-            $reservations = Reservation::where('user_id', $user_id)->get();
-            
-            // Adjust the response format as needed, ensuring it returns an array
-            return response()->json(['reservations' => $reservations]);
-        } catch (\Exception $e) {
-            return response()->json(['error' => 'Failed to fetch reservations', 'details' => $e->getMessage()], 500);
+{
+    try {
+        // Fetch all active reservations for the user's books
+        $userReservations = Reservation::where('user_id', $user_id)
+                            ->where('status', '=', 0) // Exclude reservations with status 0
+                            ->orderBy('reserve_date')
+                            ->get(['book_id', 'reserve_date', 'status', 'id']);
+        
+        // Initialize the queue positions and book details
+        $queuePositions = [];
+        $bookDetails = [];
+
+        // Process the user's reservations and determine the queue position for each book
+        foreach ($userReservations as $userReservation) {
+            $bookId = $userReservation->book_id;
+
+            // Get book details
+            $bookDetail = Material::find($bookId);
+
+            // Add book details to the array
+            $bookDetails[$bookId] = $bookDetail;
+
+            // Count the number of reservations with earlier start dates for the same book
+            $position = Reservation::where('book_id', $bookId)
+                            ->where('reserve_date', '<', $userReservation->reserve_date)
+                            ->where('status', '=', 0) // Exclude reservations with status 0
+                            ->count() + 1; // Add 1 to start positions from 1
+
+            // Assign the queue position for the book
+            $queuePositions[$bookId] = $position;
         }
+
+        // Return the reservations along with their queue positions and book details
+        return response()->json([
+            'reservations' => $userReservations,
+            'queue_positions' => $queuePositions,
+            'book_details' => $bookDetails
+        ]);
+    } catch (\Exception $e) {
+        return response()->json(['error' => 'Failed to fetch reservations', 'details' => $e->getMessage()], 500);
     }
+}
 
     public function deleteReservation($id)
     {
@@ -141,7 +204,7 @@ class StudentReservationController extends Controller
     try {
         // Retrieve reserved materials where status is 1
         $borrowedMaterials = BorrowMaterial::where('user_id', $user_id)
-                            ->where('status', 0)
+                            ->where('status', 1)
                             ->get();
 
         // Load relationships for each borrowed material
@@ -159,7 +222,7 @@ class StudentReservationController extends Controller
     try {
         // Find the borrowed material by ID where status is 1
         $borrowedMaterial = BorrowMaterial::where('id', $id)
-                            ->where('status', 0)
+                            ->where('status', 1)
                             ->first();
 
         if (!$borrowedMaterial) {
