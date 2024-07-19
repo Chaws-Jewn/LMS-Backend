@@ -19,14 +19,18 @@ use App\Http\Controllers\AuthController, App\Http\Controllers\CatalogingLogContr
 App\Http\Controllers\Cataloging\BookController, App\Http\Controllers\Cataloging\PeriodicalController, App\Http\Controllers\Cataloging\ProjectController,
 App\Http\Controllers\Cataloging\CatalogingReportController, App\Http\Controllers\Cataloging\MaterialArchiveController;
 
-use App\Http\Controllers\BorrowBookController,App\Http\Controllers\BorrowMaterialController,
-App\Http\Controllers\ReserveBookController, App\Http\Controllers\ReservationController;
+use App\Http\Controllers\BorrowBookController, App\Http\Controllers\ReservationController;
+use App\Http\Controllers\Cataloging\ViewArchivesController;
 
 use App\Http\Controllers\LockerController;
 
-use App\Http\Controllers\CirculationUserController, App\Http\Controllers\UserController, App\Http\Controllers\PatronController,
+use App\Http\Controllers\UserController, 
 App\Http\Controllers\CollegeController, App\Http\Controllers\InventoryController, App\Http\Controllers\LocationController,
 App\Http\Controllers\AnnouncementController, App\Http\Controllers\LockerHistoryController;
+
+//Circulation
+use App\Http\Controllers\Circulation\BorrowMaterialController, App\Http\Controllers\Circulation\CirculationUserController, 
+App\Http\Controllers\Circulation\PatronController, App\Http\Controllers\Circulation\ReserveBookController;
 
 Route::post('/studentlogin', [AuthController::class, 'studentLogin']);
 Route::get('/', function (Request $request) {
@@ -101,12 +105,17 @@ Route::middleware(['auth:sanctum', 'ability:maintenance'])->group(function () {
 
     Route::prefix('analytics')->group(function() {
         //Analytics Api
-        Route::get('/total-lockers', [AnalyticsController::class, 'getTotalLockers']);
+        Route::get('/total-lockers', [AnalyticsController::class, 'totalLockers']);
+        Route::get('/locker-user-by-department', [AnalyticsController::class, 'lockerUsersByDepartment']);
         Route::get('/total-active-users', [AnalyticsController::class, 'getTotalActiveUsers']);
         Route::get('/total-users-per-department', [AnalyticsController::class, 'getTotalUsersPerDepartment']);
+
+        //cataloging
         Route::get('/total-materials', [AnalyticsController::class, 'getTotalMaterials']);
+
         Route::get('/total-projects', [AnalyticsController::class, 'getTotalProjects']);
         Route::get('/total-borrowed', [AnalyticsController::class, 'getTotalBorrowed']);
+
         Route::get('/available-books', [AnalyticsController::class, 'getAvailableBooks']);
         Route::get('/unreturned-books', [AnalyticsController::class, 'getUnreturnedBooks']);
         Route::get('/missing-books', [AnalyticsController::class, 'getMissingBooks']);
@@ -153,8 +162,15 @@ Route::group(['middleware' => ['auth:sanctum', 'ability:cataloging']], function 
         });
 
         // ARCHIVE Materials
-        Route::delete('material/archive/{id}', [MaterialArchiveController::class, 'store']);
-        Route::delete('project/archive/{id}', [ProjectController::class, 'archive']);
+        Route::delete('materials/archive/{id}', [MaterialArchiveController::class, 'storeMaterial']);
+        Route::delete('projects/archive/{id}', [MaterialArchiveController::class, 'storeProject']);
+
+        // RESTORE Materials
+        Route::post('materials/restore/{id}', [MaterialArchiveController::class, 'restoreMaterial']);
+        Route::post('projects/restore/{id}', [MaterialArchiveController::class, 'restoreProject']);
+
+        //PERMANENTLY DELETE
+        Route::delete('permanently-delete/{type}/{id}', [MaterialArchiveController::class, 'deleteMaterial']);
 
         // MATERIAL VIEWING
         Route::get('books/locations', [LocationController::class, 'getLocations']);
@@ -169,6 +185,15 @@ Route::group(['middleware' => ['auth:sanctum', 'ability:cataloging']], function 
         Route::post('projects/process', [ProjectController::class, 'add']);
         Route::put('projects/process/{id}', [ProjectController::class, 'update']);
 
+        // ARCHIVE VIEWING
+        Route::group(['prefix' => 'archives'], function() {
+            Route::get('materials/{type}', [ViewArchivesController::class, 'getMaterials']);
+            Route::get('projects', [ViewArchivesController::class, 'getProjects']);
+
+            // By type
+            Route::get('materials/{type}/type/{periodical_type}', [ViewArchivesController::class, 'getMaterialsByType']);
+        });
+        
         // Get programs
         Route::get('programs', [ProgramController::class, 'get']);
     });
@@ -178,46 +203,47 @@ Route::group(['middleware' => ['auth:sanctum', 'ability:cataloging']], function 
 Route::group(['middleware' => ['auth:sanctum', 'ability:circulation']], function () {
 
     // display user list
-    Route::get('/users', [BorrowMaterialController::class, 'userlist']);
+    Route::get('/circulation/userlist', [CirculationUserController::class, 'userlist']);
 
     // borrow list
-    Route::get('/borrow-list', [BorrowMaterialController::class, 'borrowlist']);
+    Route::get('/circulation/borrow-list', [BorrowMaterialController::class, 'borrowlist']);
 
     // update borrow list
-    Route::put('borrow-edit/{id}',[BorrowMaterialController:: class, 'borrowEdit']);
+    Route::put('/circulation/borrow-edit/{id}',[BorrowMaterialController:: class, 'borrowEdit']);
 
-    // borrow-list returning book
-    Route::put('return-book/{id}', [BorrowMaterialController::class, 'returnbook']);
+    // borrow-list returning book from borrowed list
+    Route::put('circulation/return-book/{id}', [BorrowMaterialController::class, 'returnbook']);
 
     //returned book list
-    Route::get('returned-list',[BorrowMaterialController::class,'returnedlist']);
-    Route::get('returned-list/{id}',[BorrowMaterialController::class,'returnedlistid']);
+    Route::get('/circulation/returned-list',[BorrowMaterialController::class,'returnedlist']);
+    Route::get('/circulation/returned-list/{id}',[BorrowMaterialController::class,'returnedlistid']);
 
     //reservebook
-    Route::post('/reserve/book', [ReserveBookController::class, 'reservebook']);
+    Route::post('/circulation/reserve/book', [ReserveBookController::class, 'reservebook']);
 
     //reservationlist
-    Route::get('reservation-list/{type}', [ReserveBookController::class, 'reservelist']);
+    Route::get('/circulation/reservation-list/{type}', [ReserveBookController::class, 'reservelist']);
+    Route::get('/circulation/reservelist', [ReserveBookController::class, 'allreserve']);
+    Route::get('/circulation/queue', [ReserveBookController::class, 'queue']);
 
-    Route::get('queue', [ReserveBookController::class, 'queue']);
+    //borrow book
+    Route::post('/circulation/borrow/book', [BorrowMaterialController::class, 'borrowbook']);
+    Route::post('/circulation/fromreserve/book/{id}', [BorrowMaterialController::class, 'fromreservation']);
+    Route::get('/circulation/getpatrons', [PatronController::class, 'index']);
+    Route::get('/circulation/borrow-count/{id}', [BorrowMaterialController::class, 'borrowcount']);
 
-
-    // borrow book
-    Route::post('/borrow/book', [BorrowMaterialController::class, 'borrowbook']);
-    Route::post('/fromreserve/book/{id}', [BorrowMaterialController::class, 'fromreservation']);
-    Route::get('circulation/get-user/{id}', [CirculationUserController::class, 'getUser']);
-    Route::get('circulation/get-book/{id}', [CirculationUserController::class, 'getBook']);
-    Route::get('circulation/getpatrons', [PatronController::class, 'index']);
-    Route::get('borrow-count/{id}', [BorrowMaterialController::class, 'borrowcount']);
+    //get individual book & user || for autofill front end
+    Route::get('/circulation/get-book/{accession}', [CirculationUserController::class, 'getBook']);
+    Route::get('/circulation/get-user/{id}', [CirculationUserController::class, 'getUser']);
 
     //get report
-    Route::get('report', [BorrowMaterialController::class, 'bookBorrowersReport']);
-    Route::get('topborrowers', [BorrowMaterialController::class, 'topborrowers']);
-    Route::get('mostborrowed', [BorrowMaterialController::class, 'mostborrowed']);
+    Route::get('/circulation/report', [BorrowMaterialController::class, 'bookBorrowersReport']);
+    Route::get('/circulation/topborrowers', [BorrowMaterialController::class, 'topborrowers']);
+    Route::get('/circulation/mostborrowed', [BorrowMaterialController::class, 'mostborrowed']);
 
     //delete
-    Route::delete('delete-borrowlist/{id}', [BorrowMaterialController::class, 'destroy']);
-    Route::delete('delete-reservelist/{id}', [ReserveBookController::class,'destroy']);
+    Route::delete('/circulation/delete-borrowlist/{id}', [BorrowMaterialController::class, 'destroy']);
+    Route::delete('/circulation/delete-reservelist/{id}', [ReserveBookController::class,'destroy']);
 });
 
 /* STUDENT ROUTES */

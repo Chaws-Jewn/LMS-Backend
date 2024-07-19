@@ -5,17 +5,29 @@ namespace App\Http\Controllers;
 use App\Models\Locker;
 use App\Models\Material;
 use App\Models\Project;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
 class AnalyticsController extends Controller
 {
-    public function getTotalLockers()
+    public function totalLockers()
     {
-        $totalLockers = Locker::count();
+        $lockers = Locker::select('status', DB::raw('count(*) as total'))
+                                ->groupBy('status')
+                                ->get();
 
-        return response()->json(['total_lockers' => $totalLockers]);
+        return response()->json($lockers);
+    }
+
+    public function lockerUsersByDepartment() {
+        $usersByDepartments = User::join('lockers_history', 'users.id', '=', 'lockers_history.user_id')
+                                    ->join('programs', 'users.program', '=', 'programs.program_short')
+                                    ->select('programs.department_short', 'lockers_history.time_in')
+                                    ->get();
+
+        return $usersByDepartments;
     }
 
     public function getTotalActiveUsers()

@@ -12,17 +12,26 @@ class BorrowMaterial extends Model
     protected $fillable = [
         
         'user_id',
-        'book_id',
+        'accession',
         'borrow_date',
         'borrow_expiration',
         'fine',
         
 
+    ];
+
+        public function material() {
+            return $this->belongsTo(material::class, 'book_id', 'accession');
+        }
+
+        public function user(){
+            return $this->belongsTo(User::class, 'user_id');
+        }
+
+}
 
 
-
-        
-        // 'name',
+// 'name',
         // 'patron_type',
         // 'department',
         // 'reason',
@@ -42,13 +51,3 @@ class BorrowMaterial extends Model
         // 'due',
         // 'status',
 
-    ];
-
-        public function material() {
-            return $this->belongsTo(Material::class, 'book_id', 'accession');
-        }
-
-        public function user(){
-            return $this->belongsTo(User::class, 'user_id');
-        }
-}

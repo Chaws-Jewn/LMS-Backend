@@ -61,6 +61,18 @@ class UserController extends Controller
             'ext_name' => $request->ext_name
         ]);
 
+        $log = new ActivityLogController();
+        $logParam = new \stdClass(); // Instantiate stdClass
+
+        $currentUser = $request->user();
+        $logParam->system = 'User Management';
+        $logParam->username = $currentUser->username;
+        $logParam->fullname = $currentUser->first_name . ' ' . $currentUser->middle_name . ' ' . $currentUser->last_name . ' ' . $currentUser->ext_name;
+        $logParam->position = $currentUser->position;
+        $logParam->desc = 'Added user with username ' . $request->username;
+
+        $log->savePersonnelLog($logParam);
+
         $user->role = json_decode($user->role);
         return response()->json(['success'=> $user], 201);
     }
@@ -91,6 +103,19 @@ class UserController extends Controller
             'ext_name' => $request->ext_name
         ]);
 
+        // Logging
+        $log = new ActivityLogController();
+        $logParam = new \stdClass(); // Instantiate stdClass
+
+        $currentUser = $request->user();
+        $logParam->system = 'User Management';
+        $logParam->username = $currentUser->username;
+        $logParam->fullname = $currentUser->first_name . ' ' . $currentUser->middle_name . ' ' . $currentUser->last_name . ' ' . $currentUser->ext_name;
+        $logParam->position = $currentUser->position;
+        $logParam->desc = 'Updated user with username ' . $user->username;
+
+        $log->savePersonnelLog($logParam);
+
         $user = $user->fresh();
         $user->role = json_decode($user->role);
 
@@ -103,6 +128,20 @@ class UserController extends Controller
     public function destroy($id)
     {
         $user = User::findOrFail($id);
+
+        // Logging
+        $log = new ActivityLogController();
+        $logParam = new \stdClass(); // Instantiate stdClass
+
+        $currentUser = request()->user();
+        $logParam->system = 'User Management';
+        $logParam->username = $currentUser->username;
+        $logParam->fullname = $currentUser->first_name . ' ' . $currentUser->middle_name . ' ' . $currentUser->last_name . ' ' . $currentUser->ext_name;
+        $logParam->position = $currentUser->position;
+        $logParam->desc = 'Deleted user with username ' . $user->username;
+
+        $log->savePersonnelLog($logParam);
+
         $user->delete();
 
         return response()->json([
