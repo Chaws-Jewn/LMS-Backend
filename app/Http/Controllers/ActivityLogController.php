@@ -14,7 +14,7 @@ class ActivityLogController extends Controller
 
     // Required system, username, department, program, fullname, position, desc
     public function saveStudentLog($log) {
-        file_put_contents(storage_path('logs/stuentActivity.log'), date("Y-m-d H:i:s") . ';' . $log->system . ';' . $log->department . ';' . $log->program . ';' . $log->fullname . ';' . $log->username . ';' . $log->desc . ';' . PHP_EOL,FILE_APPEND | LOCK_EX);
+        file_put_contents(storage_path('logs/studentActivity.log'), date("Y-m-d H:i:s") . ';' . $log->system . ';' . $log->department . ';' . $log->program . ';' . $log->fullname . ';' . $log->username . ';' . $log->desc . ';' . PHP_EOL,FILE_APPEND | LOCK_EX);
     }
 
     // Tester for routes

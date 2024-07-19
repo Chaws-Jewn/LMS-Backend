@@ -1,6 +1,7 @@
 <?php
 
 namespace App\Http\Controllers\StudentPortal;
+use App\Http\Controllers\ActivityLogController;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\BorrowMaterial;
@@ -95,7 +96,22 @@ class StudentReservationController extends Controller
     
                 // Commit the transaction
                 DB::commit();
+
+                $student = User::with('student_program')->find($request->user_id);
+
+                $log = new ActivityLogController();
     
+                $logParam = new \stdClass(); // Instantiate stdClass
+        
+                $logParam->system = 'Student Portal';
+                $logParam->username = $student->username;
+                $logParam->fullname = $student->first_name . ' ' . $student->middle_name . ' ' . $student->last_name . ' ' . $student->ext_name;
+                $logParam->program = $student->program;
+                $logParam->department = $student->student_program->department_short;
+                $logParam->desc = 'Reserved book of accession ' . $request->book_id;
+        
+                $log->saveStudentLog($logParam);
+        
                 // Prepare and return the response data
                 $data = ['reservation' => $reservation];
                 return response()->json($data);
@@ -232,6 +248,7 @@ class StudentReservationController extends Controller
         // Optionally, you can eager load related data (e.g., book details)
         $borrowedMaterial->load('material', 'user');
 
+        
         // Return the borrowed material data as JSON response
         return response()->json(['borrowedMaterial' => $borrowedMaterial]);
     } catch (Exception $e) {
