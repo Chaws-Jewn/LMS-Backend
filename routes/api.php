@@ -298,16 +298,16 @@ Route::group(['middleware' => ['auth:sanctum', 'ability:circulation']], function
             Route::post('newreservations', [StudentReservationController::class, 'reservebook']);
             Route::get('reservations/{user_id}', [StudentReservationController::class, 'getReservationsByUserId']);
             Route::get('reservations/user/{id}', [StudentReservationController::class, 'viewReservationById']);
-            Route::delete('reservations/cancel/{id}', [StudentReservationController::class, 'deleteReservation']);
+            Route::patch('reservations/cancel/{id}', [StudentReservationController::class, 'cancelReservation']);
 
 
 
             // Audio Visuals
-            Route::get('audio-visuals', [StudentMaterialController::class, 'viewAudioVisuals']);
+            Route::get('audio-visual', [StudentMaterialController::class, 'viewAudioVisuals']);
             // By Accession
             Route::get('audio-visuals/{accession}', [StudentMaterialController::class, 'getAudioVisualByAccession']);
             // Search for Audio Visuals
-            Route::get('audio-visuals/search', [StudentMaterialController::class, 'searchAudioVisuals']);
+            Route::get('audiovisuals/searchs', [StudentMaterialController::class, 'searchAudioVisuals']);
 
             //announcement
             Route::get('announcements', [StudentViewController::class, 'index']);

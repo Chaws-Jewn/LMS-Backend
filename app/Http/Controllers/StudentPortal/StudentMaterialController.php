@@ -296,7 +296,7 @@ public function getProjectsByProgram($departmentShort) {
       public function viewAudioVisuals()
       {
           $audioVisuals = Material::where('material_type', 3)
-              ->select(['accession', 'title', 'authors', 'image_url', 'remarks', 'location'])
+              ->select(['accession', 'title', 'authors', 'call_number', 'copyright'])
               ->orderByDesc('updated_at')
               ->get();
   
