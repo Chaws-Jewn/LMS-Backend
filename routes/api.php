@@ -24,12 +24,12 @@ use App\Http\Controllers\Cataloging\ViewArchivesController;
 
 use App\Http\Controllers\LockerController;
 
-use App\Http\Controllers\UserController, 
+use App\Http\Controllers\UserController,
 App\Http\Controllers\CollegeController, App\Http\Controllers\InventoryController, App\Http\Controllers\LocationController,
 App\Http\Controllers\AnnouncementController, App\Http\Controllers\LockerHistoryController;
 
 //Circulation
-use App\Http\Controllers\Circulation\BorrowMaterialController, App\Http\Controllers\Circulation\CirculationUserController, 
+use App\Http\Controllers\Circulation\BorrowMaterialController, App\Http\Controllers\Circulation\CirculationUserController,
 App\Http\Controllers\Circulation\PatronController, App\Http\Controllers\Circulation\ReserveBookController, App\Http\Controllers\Circulation\CirculationReport;
 
 Route::post('/studentlogin', [AuthController::class, 'studentLogin']);
@@ -95,7 +95,7 @@ Route::middleware(['auth:sanctum', 'ability:maintenance'])->group(function () {
         Route::get('/logs', [LockerHistoryController::class, 'getLogs']);
         Route::get('/{locker}', [LockerController::class, 'show']);
         Route::post('/{locker}', [LockerController::class, 'update']);
-        Route::get('/delete/{locker}', [LockerController::class, 'destroy']);   //get muna ayaw gumana ng delete na method. method not allowed daw
+        Route::post('/delete/{locker}', [LockerController::class, 'destroy']);   //get muna ayaw gumana ng delete na method. method not allowed daw
     });
 
     // DEPARTMENT
@@ -106,14 +106,14 @@ Route::middleware(['auth:sanctum', 'ability:maintenance'])->group(function () {
     Route::prefix('analytics')->group(function() {
         //Analytics Api
 
-        
+
         //circu
         Route::get('/available-books', [AnalyticsController::class, 'getAvailableBooks']);
         Route::get('/unreturned-books', [AnalyticsController::class, 'getUnreturnedBooks']);
         Route::get('/missing-books', [AnalyticsController::class, 'getMissingBooks']);
         Route::get('/borrow-history', [AnalyticsController::class, 'getBorrowHistory']);
-        
-        
+
+
         //cataloging
         Route::get('/total-materials', [AnalyticsController::class, 'getTotalMaterials']);
         Route::get('/total-projects', [AnalyticsController::class, 'getTotalProjects']);
@@ -122,7 +122,7 @@ Route::middleware(['auth:sanctum', 'ability:maintenance'])->group(function () {
         Route::get('/total-lockers', [AnalyticsController::class, 'totalLockers']);
         Route::get('/locker-user-by-department', [AnalyticsController::class, 'lockerUsersByDepartment']);
 
-        
+
         // Route::get('/total-active-users', [AnalyticsController::class, 'getTotalActiveUsers']);
         // Route::get('/total-users-per-department', [AnalyticsController::class, 'getTotalUsersPerDepartment']);
 
@@ -205,7 +205,7 @@ Route::group(['middleware' => ['auth:sanctum', 'ability:cataloging']], function 
             // By type
             Route::get('materials/{type}/type/{periodical_type}', [ViewArchivesController::class, 'getMaterialsByType']);
         });
-        
+
         // Get programs
         Route::get('programs', [ProgramController::class, 'get']);
     });
@@ -262,32 +262,32 @@ Route::group(['middleware' => ['auth:sanctum', 'ability:circulation']], function
 
 /* STUDENT ROUTES */
 // Route::group(['middleware' => ['studentauth']], function () {
-    Route::group(['middleware' => ['auth:sanctum', 'ability:student']], function () { 
+    Route::group(['middleware' => ['auth:sanctum', 'ability:student']], function () {
     Route::get('borrow/user/{userId}', [BorrowMaterialController::class, 'getByUserId']);
-    
-        // Routes for viewing 
+
+        // Routes for viewing
         Route::group(['prefix' => 'student/'], function () {
             Route::get('announcements', [AnnouncementController::class, 'index']);
-    
+
             Route::get('books', [StudentMaterialController::class, 'viewBooks']);
             Route::get('periodicals', [StudentMaterialController::class, 'getPeriodicals']);
             Route::get('projects', [StudentMaterialController::class, 'getProjects']);
             Route::get('articles', [StudentMaterialController::class, 'viewArticles']);
             Route::get('projects/department/{department}', [StudentMaterialController::class, 'getProjectsByProgram']);
-    
+
             // For single record
             Route::get('book/id/{id}', [StudentMaterialController::class, 'viewBook']);
             Route::get('periodicals/id/{id}', [StudentMaterialController::class, 'getPeriodical']);
             Route::get('article/id/{id}', [StudentMaterialController::class, 'viewArticle']);
             Route::get('project/id/{accession}', [StudentMaterialController::class, 'getProjectByAccession']);
-    
+
             // For filtering material type
             Route::get('periodicals/type/{type}', [StudentMaterialController::class, 'getByType']);
             Route::get('articles/type/{type}', [StudentMaterialController::class, 'viewArticlesByType']);
             Route::get('project/{category}/{department}', [StudentMaterialController::class, 'getProjectsByCategoryAndDepartment']);
             Route::get('periodicals/materialtype/{materialType}', [StudentMaterialController::class, 'getPeriodicalByPeriodicalType']);
-    
-            // Search 
+
+            // Search
             Route::get('books/search/', [StudentMaterialController::class, 'searchBooks']);
             Route::get('periodicals/search/', [StudentMaterialController::class, 'searchPeriodicals']);
             Route::get('articles/search/', [StudentMaterialController::class, 'searchArticles']);
@@ -306,7 +306,7 @@ Route::group(['middleware' => ['auth:sanctum', 'ability:circulation']], function
             Route::get('audio-visuals', [StudentMaterialController::class, 'viewAudioVisuals']);
             // By Accession
             Route::get('audio-visuals/{accession}', [StudentMaterialController::class, 'getAudioVisualByAccession']);
-            // Search for Audio Visuals 
+            // Search for Audio Visuals
             Route::get('audio-visuals/search', [StudentMaterialController::class, 'searchAudioVisuals']);
 
             //announcement
@@ -320,7 +320,7 @@ Route::group(['middleware' => ['auth:sanctum', 'ability:circulation']], function
 
 
         });
-       
+
     });
 
 // RED ZONE

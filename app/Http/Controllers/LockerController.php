@@ -34,7 +34,7 @@ class LockerController extends Controller
         $logParam->desc = 'Updated book of accession ' . $model->accession;
 
         $log->savePersonnelLog($logParam);
-        
+
         $logEntry = "{$logDetails->username};{$fullname};{$studentNumber};{$position};{$logDetails->program};{$logDetails->desc};{$logDetails->device}";
 
         Log::info($logEntry);
@@ -185,11 +185,11 @@ class LockerController extends Controller
 
     public function destroy($id)
     {
-        $latestLocker = Locker::latest('id')->first();
-
-        if ($latestLocker && $latestLocker->id != $id) {
-            return response()->json(['errors' => 'You must delete the latest locker first.'], 400);
-        }
+//        $latestLocker = Locker::latest('id')->first();
+//
+//        if ($latestLocker && $latestLocker->id != $id) {
+//            return response()->json(['errors' => 'You must delete the latest locker first.'], 400);
+//        }
 
         $locker = Locker::findOrFail($id);
 
