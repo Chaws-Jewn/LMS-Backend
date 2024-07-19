@@ -68,7 +68,9 @@ class LockerController extends Controller
 
     public function index()
     {
-        $lockers = Locker::select('id', 'status', 'locker_number', 'updated_at', 'remarks')->get();
+        $lockers = Locker::select('id', 'status', 'locker_number', 'updated_at', 'remarks', 'user_id')
+                        ->with('user:id,first_name,last_name')
+                        ->get();
         return $lockers;
     }
 
