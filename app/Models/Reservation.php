@@ -16,7 +16,7 @@ class Reservation extends Model
         'book_id',
         'reserve_date',
         'reserve_expiration',
-        'price',
+        'fine',
         'status'
     ];
 

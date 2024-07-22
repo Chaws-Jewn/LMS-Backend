@@ -32,23 +32,22 @@ App\Http\Controllers\AnnouncementController, App\Http\Controllers\LockerHistoryC
 use App\Http\Controllers\Circulation\BorrowMaterialController, App\Http\Controllers\Circulation\CirculationUserController,
 App\Http\Controllers\Circulation\PatronController, App\Http\Controllers\Circulation\ReserveBookController, App\Http\Controllers\Circulation\CirculationReport;
 
+// FOR ALL USERS 
 Route::post('/studentlogin', [AuthController::class, 'studentLogin']);
-Route::get('/', function (Request $request) {
-    return response()->json(['Response' => 'API routes are available']);
-});
+Route::get('/', function (Request $request) { return response()->json(['Response' => 'API routes are available']);});
+Route::post('/login/{system}', [AuthController::class, 'login']);
 
+// FOR ALL AUTHENTICATED USERS
 // logged in user tester
 Route::get('/user', [AuthController::class, 'user'])->middleware('auth:sanctum');
 
 // Auth Routes
-Route::post('/login/{system}', [AuthController::class, 'login']);
-
 Route::group(['middleware' => ['auth:sanctum']], function () {
     Route::post('/refresh', [AuthController::class, 'refreshToken']);
     Route::post('/logout', [AuthController::class, 'logout']);
 });
 
-Route::post('log', [ActivityLogController::class, 'savePersonnelLog']);
+// Route::get('images/{url}', [ImageController::class, 'get'])->middleware('auth:sanctum');
 
 // Maintenance route
 Route::middleware(['auth:sanctum', 'ability:maintenance'])->group(function () {
@@ -145,10 +144,6 @@ Route::middleware(['auth:sanctum', 'ability:maintenance'])->group(function () {
 // Cataloging Process routes
 Route::group(['middleware' => ['auth:sanctum', 'ability:cataloging']], function () {
 
-    // View cataloging logs
-    Route::get('cataloging/logs', [CatalogingLogController::class, 'get']);
-    Route::get('books/locations', [BookController::class, 'getLocations']);
-
     // View Reports
     Route::group(['prefix' => 'cataloging'], function() {
         Route::group(['prefix' => 'reports'], function() {
@@ -191,7 +186,7 @@ Route::group(['middleware' => ['auth:sanctum', 'ability:cataloging']], function 
         // PROJECTS
         Route::get('projects', [ProjectController::class, 'getProjects']);
         Route::get('project/id/{id}', [ProjectController::class, 'getProject']);
-        Route::get('projects/department/{type}', [ProjectController::class, 'getByDepartment']);
+        Route::get('projects/department/{department}', [ProjectController::class, 'getByDepartment']);
         Route::post('projects/process', [ProjectController::class, 'add']);
         Route::put('projects/process/{id}', [ProjectController::class, 'update']);
 

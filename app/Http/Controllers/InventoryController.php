@@ -20,9 +20,9 @@ class InventoryController extends Controller
             return response()->json(['error' => 'Page not found'], 404);
         }
 
-        $books = Material::select('accession', 'location', 'title', 'authors', 'inventory_status')
+        $books = Material::select('accession', 'location', 'title', 'authors', 'status')
                     ->where('material_type', 0)
-                    ->where('inventory_status', $status)
+                    ->where('status', $status)
                     ->orderByDesc('created_at')
                     ->get();
 
@@ -41,9 +41,9 @@ class InventoryController extends Controller
             return response()->json(['error' => 'Page not found'], 404);
         }
 
-        $books = Material::select('accession', 'location', 'title', 'authors', 'inventory_status')
+        $books = Material::select('accession', 'location', 'title', 'authors', 'status')
                     ->where('material_type', 0)
-                    // ->where('inventory_status', $status)
+                    // ->where('status', $status)
                     ->where('accession', $search)
                     ->orderByDesc('created_at')
                     ->get();
@@ -59,7 +59,7 @@ class InventoryController extends Controller
 
     public function updateBookStatus(Request $request, $id) {
         $data = Validator::make($request->all(), [
-            'inventory_status' => 'required|numeric|between:0,4'
+            'status' => 'required|numeric|between:0,4'
         ]);
 
         if($data->fails()) {
@@ -81,7 +81,7 @@ class InventoryController extends Controller
         $logParam->username = $user->username;
         $logParam->fullname = $user->first_name . ' ' . $user->middle_name . ' ' . $user->last_name . ' ' . $user->ext_name;
         $logParam->position = $user->position;
-        $logParam->desc = 'Updated book status to ' . $request->inventory_status . ' for book ID ' . $id;
+        $logParam->desc = 'Updated book status to ' . $request->status . ' for book ID ' . $id;
 
         $log->savePersonnelLog($logParam);
 
@@ -90,8 +90,8 @@ class InventoryController extends Controller
 
     public function clearBooksHistory() {
         Material::where('material_type', 0)
-                ->where('inventory_status', 0)
-                ->update(['inventory_status' => 3]);
+                // ->where('status', 0)
+                ->update(['status' => 1]);
 
         return response()->json(['success' => 'History has been cleared.'], 200);
     }

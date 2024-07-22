@@ -175,7 +175,7 @@ class StudentMaterialController extends Controller
     // View books for student portal
     public function viewBooks() {
         $books = Material::where('material_type', 0)
-            ->select(['accession', 'call_number', 'title', 'acquired_date', 'authors', 'image_url'])
+            ->select(['accession', 'call_number', 'title', 'acquired_date', 'authors', 'image_url', 'price'])
             ->orderByDesc('date_published')
             ->get();
 

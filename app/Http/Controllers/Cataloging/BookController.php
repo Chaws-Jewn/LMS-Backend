@@ -46,7 +46,7 @@ class BookController extends Controller
                 $model = new Material();
                 try {
                     
-                    $model->fill($request->except(['accession', 'image_url']));
+                    $model->fill($request->except(['accession', 'image_url', 'title']));
                     $model->material_type = 0;
                     
                     // get id if request has an id
@@ -83,11 +83,19 @@ class BookController extends Controller
                     $author = Str::title($author);
                 }
 
+                $model->title = Str::title($request->title);
                 $model->authors = json_encode($authors);
-                $model->status = 1;
-                $model->inventory_status = 0;
+                $model->status = 0;
                 
-                $model->save();
+                try {
+                    $model->save();
+                } catch (\Illuminate\Database\QueryException $e) {
+                    if ($e->getCode() == 23000) {
+                        return response()->json(['message' => 'Duplicate accession entry detected.'], 409); // HTTP status code 409 for conflict
+                    } else {
+                        return response()->json(['message' => 'Cannot process request.'], 400); // HTTP status code 500 for internal server error
+                    }
+                }
             }
         }
 
@@ -159,7 +167,16 @@ class BookController extends Controller
         }
 
         $model->authors = json_encode($authors);
-        $model->save();
+        
+        try {
+            $model->save();
+        } catch (\Illuminate\Database\QueryException $e) {
+            if ($e->getCode() == 23000) {
+                return response()->json(['message' => 'Duplicate accession entry detected.'], 409); // HTTP status code 409 for conflict
+            } else {
+                return response()->json(['message' => 'Cannot process request.'], 400); // HTTP status code 500 for internal server error
+            }
+        }
 
         $log = new ActivityLogController();
 

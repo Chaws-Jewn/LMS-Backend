@@ -15,35 +15,33 @@ use App\Models\LockersHistory;
 class LockerController extends Controller
 {
 
-    private function saveLog($logDetails)
+    private function saveLog($user, $system, $desc)
     {
-        $position = property_exists($logDetails, 'position') ? $logDetails->position : 'Unknown';
-        $fullname = property_exists($logDetails, 'fullname') ? $logDetails->fullname : 'Unknown';
-        $studentNumber = property_exists($logDetails, 'studentNumber') ? $logDetails->studentNumber : 'Unknown';
+        // $position = property_exists($logDetails, 'position') ? $logDetails->position : 'Unknown';
+        // $fullname = property_exists($logDetails, 'fullname') ? $logDetails->fullname : 'Unknown';
+        // $studentNumber = property_exists($logDetails, 'studentNumber') ? $logDetails->studentNumber : 'Unknown';
 
         $log = new ActivityLogController();
 
         $logParam = new \stdClass(); // Instantiate stdClass
 
-        $user = $request->user();
-
-        $logParam->system = 'Cataloging';
+        $logParam->system = $system;
         $logParam->username = $user->username;
         $logParam->fullname = $user->first_name . ' ' . $user->middle_name . ' ' . $user->last_name . ' ' . $user->ext_name;
         $logParam->position = $user->position;
-        $logParam->desc = 'Updated book of accession ' . $model->accession;
+        $logParam->desc = $desc;
 
         $log->savePersonnelLog($logParam);
 
-        $logEntry = "{$logDetails->username};{$fullname};{$studentNumber};{$position};{$logDetails->program};{$logDetails->desc};{$logDetails->device}";
+        // $logEntry = "{$logDetails->username};{$fullname};{$studentNumber};{$position};{$logDetails->program};{$logDetails->desc};{$logDetails->device}";
 
-        Log::info($logEntry);
+        // Log::info($logEntry);
 
-        file_put_contents(
-            base_path('admin-lockers.log'), // Path to the log file
-            date("Y-m-d H:i:s") . ';' . $logDetails->username . ';' . $fullname . ';' . $studentNumber . ';' . $position . ';' . $logDetails->program . ';' . $logDetails->desc . ';' . $logDetails->device . PHP_EOL,
-            FILE_APPEND | LOCK_EX
-        );
+        // file_put_contents(
+        //     base_path('admin-lockers.log'), // Path to the log file
+        //     date("Y-m-d H:i:s") . ';' . $logDetails->username . ';' . $fullname . ';' . $studentNumber . ';' . $position . ';' . $logDetails->program . ';' . $logDetails->desc . ';' . $logDetails->device . PHP_EOL,
+        //     FILE_APPEND | LOCK_EX
+        // );
     }
 
 
@@ -167,23 +165,13 @@ class LockerController extends Controller
 
         $locker->update($validatedData);
 
-        $user = $request->user();
-
-        // Log the action
-        $logDetails = (object) [
-            'username' => $user->username,
-            'first_name' => $user->first_name,
-            'position' => $user->position ?? 'Unknown',
-            'program' => $user->program,
-            'desc' => "Updated locker #{$locker->locker_number}",
-            'device' => $request->header('User-Agent')
-        ];
-        $this->saveLog($logDetails);
+        $user = auth()->user();
+        $this->saveLog($user, 'Maintenance', 'Updated locker of id ' . $id);
 
         return response()->json(['success' => $locker]);
     }
 
-    public function destroy($id)
+    public function destroy(Request $request, $id)
     {
 //        $latestLocker = Locker::latest('id')->first();
 //
@@ -203,15 +191,7 @@ class LockerController extends Controller
 
         // Log the action
         $user = auth()->user();
-        $logDetails = (object) [
-            'username' => $user->username,
-            'first_name' => $user->first_name,
-            'position' => $user->position ?? 'Unknown',
-            'program' => $user->program,
-            'desc' => "Deleted locker #{$lockerNumber}",
-            'device' => request()->header('User-Agent')
-        ];
-        $this->saveLog($logDetails);
+        $this->saveLog($user, 'Maintenance', 'Deleted locker number ' . $lockerNumber);
 
         return response()->json(['success' => 'Locker has been deleted.']);
     }
@@ -262,18 +242,18 @@ class LockerController extends Controller
                         $log->update(['time_out' => Carbon::now()]);
                     }
 
-                    $freedByName = auth()->user() ? auth()->user()->first_name . ' ' . auth()->user()->last_name : 'Front Desk';
+                    // $freedByName = auth()->user() ? auth()->user()->first_name . ' ' . auth()->user()->last_name : 'Front Desk';
 
-                    $logDetails = (object) [
-                        'username' => auth()->user()->username ?? 'unknown',
-                        'fullname' => $freedByName,
-                        'studentNumber' => '',
-                        'position' => 'Front Desk',
-                        'program' => '',
-                        'desc' => "freed locker #{$locker->locker_number}",
-                        'device' => 'server'
-                    ];
-                    $this->saveLog($logDetails);
+                    // $logDetails = (object) [
+                    //     'username' => auth()->user()->username ?? 'unknown',
+                    //     'fullname' => $freedByName,
+                    //     'studentNumber' => '',
+                    //     'position' => 'Front Desk',
+                    //     'program' => '',
+                    //     'desc' => "freed locker #{$locker->locker_number}",
+                    //     'device' => 'server'
+                    // ];
+                    $this->saveLog(auth()->user(), 'Locker', "Freed locker #{$locker->locker_number}");
 
                     $locker->save();
                     return response()->json($locker);
@@ -312,16 +292,16 @@ class LockerController extends Controller
                 $occupiedLocker->save();
 
                 // Log log out event
-                $logDetails = (object) [
-                    'username' => $user->username,
-                    'fullname' => $user->first_name . ' ' . $user->last_name,
-                    'studentNumber' => $user->id,
-                    'position' => $user->position ?? 'Unknown',
-                    'program' => $user->program ?? '',
-                    'desc' => "freed locker #{$occupiedLocker->locker_number}",
-                    'device' => 'server'
-                ];
-                $this->saveLog($logDetails);
+                // $logDetails = (object) [
+                //     'username' => $user->username,
+                //     'fullname' => $user->first_name . ' ' . $user->last_name,
+                //     'studentNumber' => $user->id,
+                //     'position' => $user->position ?? 'Unknown',
+                //     'program' => $user->program ?? '',
+                //     'desc' => "freed locker #{$occupiedLocker->locker_number}",
+                //     'device' => 'server'
+                // ];
+                $this->saveLog(auth()->user(), 'Locker', "Freed locker #{$occupiedLocker->locker_number}");
             }
 
             if ($locker->status === 'Occupied') {
@@ -347,7 +327,7 @@ class LockerController extends Controller
                     'device' => 'server'
                 ];
 
-                $this->saveLog($logDetails);
+                $this->saveLog(auth()->user(), 'Locker', "Freed locker #{$locker->locker_number}");
             } else {
                 $locker->status = 'Occupied';
                 $locker->user_id = $user->id;
@@ -368,7 +348,7 @@ class LockerController extends Controller
                     'device' => 'server'
                 ];
 
-                $this->saveLog($logDetails);
+                $this->saveLog(auth()->user(), 'Locker', "Occupied locker #{$locker->locker_number}");
             }
 
             $locker->save();

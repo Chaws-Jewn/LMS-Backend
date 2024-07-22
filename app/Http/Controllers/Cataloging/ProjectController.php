@@ -9,6 +9,7 @@ use Exception, DB, Storage, Str;
 use App\Http\Controllers\Controller;
 use App\Http\Controllers\ImageController;
 use App\Http\Controllers\ActivityLogController;
+use PhpParser\JsonDecoder;
 
 class ProjectController extends Controller
 {
@@ -18,7 +19,7 @@ class ProjectController extends Controller
     public function getProjects() {
         $projects = Project::with('project_program')
         ->orderByDesc('updated_at')
-        ->get(['accession', 'program', 'title', 'authors', 'category', 'date_published']);
+        ->get(['accession', 'program', 'title', 'authors', 'category', 'date_published', 'created_at']);
 
         foreach($projects as $project) {
             if($project->image_url != null)
@@ -31,53 +32,16 @@ class ProjectController extends Controller
     }
 
     public function getByDepartment($department) {
-        $all_projects = Project::with('program.department')->get();
+        $projectsRaw = Project::with('project_program')->get(['category', 'title', 'program', 'authors', 'date_published', 'created_at']);
 
         $projects = [];
-        foreach($all_projects as $project) {
-            if($project->program->department->department == $department) {
+        foreach($projectsRaw as $project) {
+            if($project->project_program->department_short == $department) {
+                if($project->authors) $project->authors = json_decode($project->authors);
                 array_push($projects, $project);
             }
         }
-        return $projects;
-    }
-
-    public function getCounts($department) {
-        $projects = Project::with('program.department')->get();
-
-        $keys = [];
-        foreach($projects as $project) {
-            if(!in_array($project->category, $keys)) {
-                foreach($keys as $key) {
-                    if($key == $project->program->category) {
-                        $keys[$key]++;
-                        break;
-                    }
-                }
-            };
-
-        }
-    }
-
-    // STUDENT
-    public function getByType($department) {
-        // for getting by departments -> student portal
-        $projects = Project::with(['project_program'])->orderByDesc('created_at')->get(['accession', 'program', 'category', 'title', 'date_published', 'created_at']);
-
-        $projects = $projects->where('program_program.department_short', '=', $department);
         
-        $projects->each(function ($project) {
-            $project->projectAuthors = $project->projectAuthors->sortBy('name')->values();
-        });
-
-        foreach($projects as $project) {
-            if($project->image_url != null)
-                $project->image_url = self::URL .  Storage::url($project->image_url);
-
-            $project->authors = json_decode($project->authors);
-            $project->keywords = json_decode($project->keywords);
-        }
-
         return $projects;
     }
     
@@ -91,7 +55,7 @@ class ProjectController extends Controller
         
         return $project;
     }
-    
+
     /* DATA PROCESSING */
     public function add(Request $request) {
 
@@ -141,7 +105,15 @@ class ProjectController extends Controller
 
         $model->authors = json_encode($authors);
         
-        $model->save();
+        try {
+            $model->save();
+        } catch (\Illuminate\Database\QueryException $e) {
+            if ($e->getCode() == 23000) {
+                return response()->json(['message' => 'Duplicate accession entry detected.'], 409); // HTTP status code 409 for conflict
+            } else {
+                return response()->json(['message' => 'Cannot process request.'], 400); // HTTP status code 500 for internal server error
+            }
+        }
         
         $log = new ActivityLogController();
 
@@ -206,7 +178,15 @@ class ProjectController extends Controller
 
         $model->authors = json_encode($authors);
         
-        $model->save();
+        try {
+            $model->save();
+        } catch (\Illuminate\Database\QueryException $e) {
+            if ($e->getCode() == 23000) {
+                return response()->json(['message' => 'Duplicate accession entry detected.'], 409); // HTTP status code 409 for conflict
+            } else {
+                return response()->json(['message' => 'Cannot process request.'], 400); // HTTP status code 500 for internal server error
+            }
+        }
 
         $log = new ActivityLogController();
 

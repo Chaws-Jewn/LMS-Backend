@@ -29,7 +29,7 @@ class StudentReservationController extends Controller
     Log::info('Received payload:', $payload);
 
     // Check if the required fields are present
-    $requiredFields = ['book_id', 'user_id', 'reserve_date', 'price', 'status', 'type'];
+    $requiredFields = ['book_id', 'user_id', 'reserve_date', 'status', 'type'];
     foreach ($requiredFields as $field) {
         if (!isset($payload[$field])) {
             return response()->json(['error' => 'Missing required field: ' . $field, 'logMessages' => $logMessages], 400);
@@ -99,7 +99,7 @@ class StudentReservationController extends Controller
             $reservation->book_id = $payload['book_id'];
             $reservation->user_id = $payload['user_id'];
             $reservation->reserve_date = $payload['reserve_date'];
-            $reservation->fine = $payload['price'];
+            $reservation->fine = $payload['fine'];
             $reservation->status = $payload['status'];
             $reservation->reservation_type = $payload['type'];
 

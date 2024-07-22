@@ -14,6 +14,7 @@ class MaterialArchiveController extends Controller
 {
     public function storeMaterial(Request $request, $id) {
         $model = Material::findOrFail($id);
+        if($model->status != 0) return response()->json(['message' => 'Record is currently unavailable'], 400);
         $accession = $model->accession;
 
         switch($model->material_type) {
@@ -34,40 +35,51 @@ class MaterialArchiveController extends Controller
                 break;
         }
         
-        DB::transaction(function () use ($model, $id) {
+        $transact = DB::transaction(function () use ($model, $id) {
 
-            DB::connection('archives')->table('materials')->insert([
-                'accession' => $model->accession,
-                'material_type' => $model->material_type,
-                'title' => $model->title,
-                'authors' => $model->authors,
-                'publisher' => $model->publisher,
-                'image_url' => $model->image_url,
-                'location' => $model->location,
-                'volume' => $model->volume,
-                'edition' => $model->edition,
-                'pages' => $model->pages,
-                'acquired_date' => $model->acquired_date,
-                'date_published' => $model->date_published,
-                'remarks' => $model->remarks,
-                'copyright' => $model->copyright,
-                'call_number' => $model->call_number,
-                'source_of_fund' => $model->source_of_fund,
-                'price' => $model->price,
-                'status' => $model->status,
-                'inventory_status' => $model->inventory_status,
-                'periodical_type' => $model->periodical_type,
-                'language' => $model->language,
-                'issue' => $model->issue,
-                'subject' => $model->subject,
-                'abstract' => $model->abstract,
-                'created_at' => $model->created_at,
-                'archived_at' => now()
-            ]);
-            
+            try {
+                DB::connection('archives')->table('materials')->insert([
+                    'accession' => $model->accession,
+                    'material_type' => $model->material_type,
+                    'title' => $model->title,
+                    'authors' => $model->authors,
+                    'publisher' => $model->publisher,
+                    'image_url' => $model->image_url,
+                    'location' => $model->location,
+                    'volume' => $model->volume,
+                    'edition' => $model->edition,
+                    'pages' => $model->pages,
+                    'acquired_date' => $model->acquired_date,
+                    'date_published' => $model->date_published,
+                    'remarks' => $model->remarks,
+                    'copyright' => $model->copyright,
+                    'call_number' => $model->call_number,
+                    'source_of_fund' => $model->source_of_fund,
+                    'price' => $model->price,
+                    'status' => $model->status,
+                    'inventory_status' => $model->inventory_status,
+                    'periodical_type' => $model->periodical_type,
+                    'language' => $model->language,
+                    'issue' => $model->issue,
+                    'subject' => $model->subject,
+                    'abstract' => $model->abstract,
+                    'created_at' => $model->created_at,
+                    'archived_at' => now()
+                ]);
+            } catch (\Illuminate\Database\QueryException $e) {
+                if ($e->getCode() == 23000) {
+                    return 'Duplicate accession entry on archives table.'; // HTTP status code 409 for conflict
+                } else {
+                    return 'Cannot process request.'; // HTTP status code 500 for internal server error
+                }
+            }
+
             $model->delete();
+            return 'success';
         });
         
+        if($transact != 'success') return response()->json(['message' => $transact], 409);
+
         $log = new ActivityLogController();
 
         $logParam = new \stdClass(); // Instantiate stdClass
@@ -108,26 +120,37 @@ class MaterialArchiveController extends Controller
         
         $model = Project::findOrFail($id);
 
-        DB::transaction(function () use ($model, $id) {
-            DB::connection('archives')->table('academic_projects')->insert([
-                'accession' => $model->accession,
-                'category' => $model->category,
-                'title' => $model->title,
-                'authors' => $model->authors,
-                'program' => $model->program,
-                'image_url' => $model->image_url,
-                'date_published' => $model->date_published,
-                'keywords' => $model->keywords,
-                'language' => $model->language,
-                'abstract' => $model->abstract,
-                'created_at' => $model->created_at,
-                'archived_at' => now()
-            ]);
-            
+        $transact = DB::transaction(function () use ($model, $id) {
+            try {
+                DB::connection('archives')->table('academic_projects')->insert([
+                    'accession' => $model->accession,
+                    'category' => $model->category,
+                    'title' => $model->title,
+                    'authors' => $model->authors,
+                    'program' => $model->program,
+                    'image_url' => $model->image_url,
+                    'date_published' => $model->date_published,
+                    'keywords' => $model->keywords,
+                    'language' => $model->language,
+                    'abstract' => $model->abstract,
+                    'created_at' => $model->created_at,
+                    'archived_at' => now()
+                ]);
+            }
+            catch (\Illuminate\Database\QueryException $e) {
+                if ($e->getCode() == 23000) {
+                    return 'Duplicate accession entry on archives table.'; // HTTP status code 409 for conflict
+                } else {
+                    return 'Cannot process request.'; // HTTP status code 500 for internal server error
+                }
+            }
+
             $model->delete();
+            return 'success';
         });
 
-        
+        if($transact != 'success') return response()->json(['message' => $transact], 409);
+
         $log = new ActivityLogController();
 
         $logParam = new \stdClass(); // Instantiate stdClass
@@ -172,40 +195,50 @@ class MaterialArchiveController extends Controller
             return response()->json(['message' => 'Cannot find material'], 404);
         }
 
-        DB::transaction(function () use ($model, $delete) {
-            
-
-            Material::insert([
-                'accession' => $model->accession,
-                'material_type' => $model->material_type,
-                'title' => $model->title,
-                'authors' => $model->authors,
-                'publisher' => $model->publisher,
-                'image_url' => $model->image_url,
-                'location' => $model->location,
-                'volume' => $model->volume,
-                'edition' => $model->edition,
-                'pages' => $model->pages,
-                'acquired_date' => $model->acquired_date,
-                'date_published' => $model->date_published,
-                'remarks' => $model->remarks,
-                'copyright' => $model->copyright,
-                'call_number' => $model->call_number,
-                'source_of_fund' => $model->source_of_fund,
-                'price' => $model->price,
-                'status' => $model->status,
-                'inventory_status' => $model->inventory_status,
-                'periodical_type' => $model->periodical_type,
-                'language' => $model->language,
-                'issue' => $model->issue,
-                'subject' => $model->subject,
-                'abstract' => $model->abstract,
-                'created_at' => $model->created_at,
-                'updated_at' => now()
-            ]);
+        
+        $transact = DB::transaction(function () use ($model, $delete) {
+            try {
+                Material::insert([
+                    'accession' => $model->accession,
+                    'material_type' => $model->material_type,
+                    'title' => $model->title,
+                    'authors' => $model->authors,
+                    'publisher' => $model->publisher,
+                    'image_url' => $model->image_url,
+                    'location' => $model->location,
+                    'volume' => $model->volume,
+                    'edition' => $model->edition,
+                    'pages' => $model->pages,
+                    'acquired_date' => $model->acquired_date,
+                    'date_published' => $model->date_published,
+                    'remarks' => $model->remarks,
+                    'copyright' => $model->copyright,
+                    'call_number' => $model->call_number,
+                    'source_of_fund' => $model->source_of_fund,
+                    'price' => $model->price,
+                    'status' => $model->status,
+                    'inventory_status' => $model->inventory_status,
+                    'periodical_type' => $model->periodical_type,
+                    'language' => $model->language,
+                    'issue' => $model->issue,
+                    'subject' => $model->subject,
+                    'abstract' => $model->abstract,
+                    'created_at' => $model->created_at,
+                    'updated_at' => now()
+                ]);
+            } catch (\Illuminate\Database\QueryException $e) {
+                if ($e->getCode() == 23000) {
+                    return 'Duplicate accession entry on materials table.'; // HTTP status code 409 for conflict
+                } else {
+                    return 'Cannot process request.'; // HTTP status code 500 for internal server error
+                }
+            }
 
             $delete->delete();
+            return 'success';
         });
+
+        if($transact != 'success') return response()->json(['message' => $transact], 409);
 
         $log = new ActivityLogController();
 
@@ -226,7 +259,7 @@ class MaterialArchiveController extends Controller
 
     public function restoreProject(Request $request, $id) {
         
-        DB::transaction(function () use ($id) {
+        $transact = DB::transaction(function () use ($id) {
             try {
                 $delete = DB::connection('archives')->table('academic_projects')->where('accession', $id);
                 $model = $delete->first();
@@ -234,23 +267,35 @@ class MaterialArchiveController extends Controller
                 return response()->json(['message' => 'Cannot find material'], 404);
             }
 
-            Project::insert([
-                'accession' => $model->accession,
-                'category' => $model->category,
-                'title' => $model->title,
-                'authors' => $model->authors,
-                'program' => $model->program,
-                'image_url' => $model->image_url,
-                'date_published' => $model->date_published,
-                'keywords' => $model->keywords,
-                'language' => $model->language,
-                'abstract' => $model->abstract,
-                'created_at' => $model->created_at,
-                'updated_at' => now()
-            ]);
+            try {
+                Project::insert([
+                    'accession' => $model->accession,
+                    'category' => $model->category,
+                    'title' => $model->title,
+                    'authors' => $model->authors,
+                    'program' => $model->program,
+                    'image_url' => $model->image_url,
+                    'date_published' => $model->date_published,
+                    'keywords' => $model->keywords,
+                    'language' => $model->language,
+                    'abstract' => $model->abstract,
+                    'created_at' => $model->created_at,
+                    'updated_at' => now()
+                ]);
+            } catch (\Illuminate\Database\QueryException $e) {
+                if ($e->getCode() == 23000) {
+                    return 'Duplicate accession entry on projects table.'; // HTTP status code 409 for conflict
+                } else {
+                    return 'Cannot process request.'; // HTTP status code 500 for internal server error
+                }
+            }
+
+            return 'success';
             
             $delete->delete();
         });
+
+        if($transact != 'success') return response()->json(['message' => $transact], 409);
         
         $log = new ActivityLogController();
 
