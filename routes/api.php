@@ -287,6 +287,7 @@ Route::group(['middleware' => ['auth:sanctum', 'ability:circulation']], function
             Route::get('periodicals/search/', [StudentMaterialController::class, 'searchPeriodicals']);
             Route::get('articles/search/', [StudentMaterialController::class, 'searchArticles']);
             Route::get('projects/search/', [StudentMaterialController::class, 'searchProjects']);
+            Route::get('patron', [StudentReservationController::class, 'patron']);
 
 
             //new API for reservation

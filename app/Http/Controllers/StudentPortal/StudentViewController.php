@@ -154,15 +154,22 @@ class StudentViewController extends Controller
 
     //Annoucement
     public function index()
-    {
-        $announcements = Announcement::with('author')->get();
-        $announcements->transform(function ($announcement) {
-            $announcement->author_name = $announcement->author->first_name . ' ' . $announcement->author->last_name;
-            unset($announcement->author);
-            return $announcement;
-        });
-        return response()->json($announcements);
-    }
+{
+    // Fetch announcements ordered by 'created_at' in descending order
+    $announcements = Announcement::with('author')
+        ->orderBy('created_at', 'desc')
+        ->get();
+
+    // Transform the announcements to include author name and remove author object
+    $announcements->transform(function ($announcement) {
+        $announcement->author_name = $announcement->author->first_name . ' ' . $announcement->author->last_name;
+        unset($announcement->author); // Remove the author object
+        return $announcement;
+    });
+
+    // Return the transformed and ordered announcements as JSON
+    return response()->json($announcements);
+}
 
     // Display the specified announcement
     public function show($id)
