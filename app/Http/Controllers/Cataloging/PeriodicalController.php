@@ -71,7 +71,15 @@ class PeriodicalController extends Controller
 
         $model->authors = json_encode($authors);
         
-        $model->save();
+        try {
+            $model->save();
+        } catch (\Illuminate\Database\QueryException $e) {
+            if ($e->getCode() == 23000) {
+                return response()->json(['message' => 'Duplicate accession entry detected.'], 409); // HTTP status code 409 for conflict
+            } else {
+                return response()->json(['message' => 'Cannot process request.'], 400); // HTTP status code 500 for internal server error
+            }
+        }
 
         $log = new ActivityLogController();
 
@@ -130,7 +138,8 @@ class PeriodicalController extends Controller
 
         $model = Material::findOrFail($id);
 
-        $model->fill($request->except('image_url'));
+        $model->fill($request->except('image_url', 'title'));
+        $model->title = Str::title($request->title);
 
         if(!empty($request->image_url)) {
             $ext = $request->file('image_url')->extension();
@@ -144,7 +153,15 @@ class PeriodicalController extends Controller
             $model->image_url = $path;
         }
 
-        $model->save();
+        try {
+            $model->save();
+        } catch (\Illuminate\Database\QueryException $e) {
+            if ($e->getCode() == 23000) {
+                return response()->json(['message' => 'Duplicate accession entry detected.'], 409); // HTTP status code 409 for conflict
+            } else {
+                return response()->json(['message' => 'Cannot process request.'], 400); // HTTP status code 500 for internal server error
+            }
+        }
 
         $log = new ActivityLogController();
 

@@ -3,12 +3,13 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use App\Models\LockerHistory;
+use App\Models\LockersHistory;
 
 class LockerHistoryController extends Controller
 {
     public function saveLog($log)
     {
+        
         file_put_contents(
             base_path('admin-lockers.log'), // Path to the log file
             date("Y-m-d H:i:s") . ';' . $log->username . ';' . $log->fullname . ';' . $log->position . ';' . $log->program . ';' . $log->desc . ';' . $log->device . PHP_EOL,
@@ -19,7 +20,7 @@ class LockerHistoryController extends Controller
     public function getLockerHistory()
     {
         // Retrieve locker logs along with locker details sorted by created_at descending
-        $logWithLockers = LockerHistory::with('locker')->orderBy('created_at', 'desc')->get();
+        $logWithLockers = LockersHistory::with('locker')->orderBy('created_at', 'desc')->get();
 
         // Log the action
         $log = new \stdClass();
@@ -44,7 +45,7 @@ class LockerHistoryController extends Controller
         $department = $request->input('department');
         $allPages = $request->input('all_pages', false);
 
-        $query = LockerHistory::with('user.program')
+        $query = LockersHistory::with('user.program')
             ->with('locker')
             ->orderBy('created_at', 'desc'); // Order by created_at descending
 
@@ -103,7 +104,7 @@ class LockerHistoryController extends Controller
 
     public function add(int $id, string $action, string $log)
     {
-        $model = LockerHistory::create([
+        $model = LockersHistory::create([
             'user_id' => $id,
             'action' => $action,
             'log' => $log

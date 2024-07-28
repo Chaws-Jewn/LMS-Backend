@@ -63,12 +63,12 @@ class MaterialViewController extends Controller
         switch($type) {
             case 'periodicals':
                 $material_type = 1;
-                $columns = ['accession', 'title', 'authors', 'publisher', 'copyright', 'acquired_date'];
+                $columns = ['accession', 'title', 'authors', 'publisher', 'copyright', 'acquired_date', 'created_at'];
                 break;
 
             case 'articles':
                 $material_type = 2;
-                $columns = ['accession', 'title', 'authors', 'publisher', 'date_published', 'copyright'];
+                $columns = ['accession', 'title', 'authors', 'publisher', 'date_published', 'copyright', 'created_at'];
                 break;
 
             default:
@@ -88,7 +88,9 @@ class MaterialViewController extends Controller
 
     public function getMaterial($id) {
         $material = Material::where('accession', $id)->firstOrFail();
-        $material->authors = json_decode($material->authors);
+        if($material->authors) $material->authors = json_decode($material->authors);
+        if($material->keywords) $material->keywords = json_decode($material->keywords);
+        if($material->image_url) $material->image_url = self::URL .  Storage::url($material->image_url);
         return $material;
     }
 }

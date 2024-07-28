@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 class Reservation extends Model
 {
     use HasFactory;
-    public $timestamps = false;
+    public $timestamps = true;
     protected $table = 'borrow_materials';
 
     protected $fillable = [
@@ -16,7 +16,7 @@ class Reservation extends Model
         'book_id',
         'reserve_date',
         'reserve_expiration',
-        'price',
+        'fine',
         'status'
     ];
 
@@ -33,6 +33,6 @@ class Reservation extends Model
 
     public function book()
     {
-        return $this->belongsTo(Material::class);
+        return $this->belongsTo(Material::class, 'book_id');
     }
 }

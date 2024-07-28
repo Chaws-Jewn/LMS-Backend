@@ -12,17 +12,18 @@ use Illuminate\Support\Facades\Storage;
 class OPACMaterialsController extends Controller
 {
     // const URL = 'http://26.68.32.39:8000';
-    const URL = 'http://127.0.0.1:8000';
+    const URL = 'http://192.168.18.185:8000';
 
-    public function getBooks() {        
-        $books = Material::select('accession', 'title', 'edition', 'date_published', 'authors', 'image_url', 'volume')
-                    ->where('material_type', 0)
-                    ->orderBy('date_published', 'desc')
-                    ->get()
-                    ->unique(function ($material) {
-                        return $material->title . '-' . $material->edition . '-' . $material->volume;
-                    })
-                    ->values();
+    public function getBooks() {      
+        $books = Material::where('material_type', 0)->get(['accession', 'title', 'edition', 'date_published', 'authors', 'image_url', 'volume']);  
+        // $books = Material::select('accession', 'title', 'edition', 'date_published', 'authors', 'image_url', 'volume')
+        //             ->where('material_type', 0)
+        //             ->orderBy('date_published', 'desc')
+        //             ->get()
+        //             ->unique(function ($material) {
+        //                 return $material->title . '-' . $material->edition . '-' . $material->volume;
+        //             })
+        //             ->values();
 
         foreach ($books as $book) {
             $book->authors = json_decode($book->authors);
@@ -31,9 +32,9 @@ class OPACMaterialsController extends Controller
             }
         }
 
-        $books = $books->map(function ($book) {
-            return $book->only(['accession', 'title', 'date_published', 'authors', 'image_url',]);
-        });
+        // $books = $books->map(function ($book) {
+        //     return $book->only(['accession', 'title', 'date_published', 'authors', 'image_url',]);
+        // });
         
         return $books;
     }

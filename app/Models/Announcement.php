@@ -16,4 +16,9 @@ class Announcement extends Model
         'text',
         'image_url'
     ];
+
+    public function author()
+    {
+        return $this->belongsTo(User::class, 'author_id');
+    }
 }

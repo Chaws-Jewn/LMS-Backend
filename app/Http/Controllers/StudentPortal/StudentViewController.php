@@ -5,6 +5,7 @@ namespace App\Http\Controllers\StudentPortal;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Material;
+use App\Models\Announcement;
 use App\Models\Project;
 use Illuminate\Support\Facades\Storage;
 
@@ -148,6 +149,35 @@ class StudentViewController extends Controller
     
         // Return the response as JSON
         return response()->json($projectCategories);
+    }
+
+
+    //Annoucement
+    public function index()
+{
+    // Fetch announcements ordered by 'created_at' in descending order
+    $announcements = Announcement::with('author')
+        ->orderBy('created_at', 'desc')
+        ->get();
+
+    // Transform the announcements to include author name and remove author object
+    $announcements->transform(function ($announcement) {
+        $announcement->author_name = $announcement->author->first_name . ' ' . $announcement->author->last_name;
+        unset($announcement->author); // Remove the author object
+        return $announcement;
+    });
+
+    // Return the transformed and ordered announcements as JSON
+    return response()->json($announcements);
+}
+
+    // Display the specified announcement
+    public function show($id)
+    {
+        $announcement = Announcement::with('author')->findOrFail($id);
+        $announcement->author_name = $announcement->author->first_name . ' ' . $announcement->author->last_name;
+        unset($announcement->author);
+        return response()->json($announcement);
     }
 
 }

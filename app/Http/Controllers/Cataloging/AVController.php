@@ -31,8 +31,18 @@ class AVController extends Controller
             $author = Str::title($author);
         }
 
+        $model->title = Str::title($request->title);
         $model->authors = json_encode($authors);
-        $model->save();
+        
+        try {
+            $model->save();
+        } catch (\Illuminate\Database\QueryException $e) {
+            if ($e->getCode() == 23000) {
+                return response()->json(['message' => 'Duplicate accession entry detected.'], 409); // HTTP status code 409 for conflict
+            } else {
+                return response()->json(['message' => 'Cannot process request.'], 400); // HTTP status code 500 for internal server error
+            }
+        }
         
         $log = new ActivityLogController();
 
@@ -72,8 +82,18 @@ class AVController extends Controller
             $author = Str::title($author);
         }
 
+        $model->title = Str::title($request->title);
         $model->authors = json_encode($authors);
-        $model->save();
+        
+        try {
+            $model->save();
+        } catch (\Illuminate\Database\QueryException $e) {
+            if ($e->getCode() == 23000) {
+                return response()->json(['message' => 'Duplicate accession entry detected.'], 409); // HTTP status code 409 for conflict
+            } else {
+                return response()->json(['message' => 'Cannot process request.'], 400); // HTTP status code 500 for internal server error
+            }
+        }
 
         $log = new ActivityLogController();
 

@@ -4,6 +4,7 @@ namespace App\Http\Controllers\StudentPortal;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+use App\Models\Reservation;
 use App\Models\Material;
 use App\Models\Project;
 use Illuminate\Support\Facades\Storage;
@@ -174,7 +175,7 @@ class StudentMaterialController extends Controller
     // View books for student portal
     public function viewBooks() {
         $books = Material::where('material_type', 0)
-            ->select(['accession', 'call_number', 'title', 'acquired_date', 'authors', 'image_url'])
+            ->select(['accession', 'call_number', 'title', 'acquired_date', 'authors', 'image_url', 'price'])
             ->orderByDesc('date_published')
             ->get();
 
@@ -277,4 +278,73 @@ public function getProjectsByProgram($departmentShort) {
     private function decodeAuthors(&$material) {
         $material->authors = json_decode($material->authors, true);
     }
+
+    public function getProjectByAccession($accession)
+    {
+        $project = Project::where('accession', $accession)->first();
+
+        if ($project) {
+            $this->processImageURL($project);
+            $this->decodeAuthors($project);
+            return response()->json($project);
+        } else {
+            return response()->json(['error' => 'Project not found'], 404);
+        }
+    }
+
+      // View audio-visuals for student portal
+      public function viewAudioVisuals()
+      {
+          $audioVisuals = Material::where('material_type', 3)
+              ->select(['accession', 'title', 'authors', 'call_number', 'copyright'])
+              ->orderByDesc('updated_at')
+              ->get();
+  
+          foreach ($audioVisuals as $audioVisual) {
+              $this->processImageURL($audioVisual);
+              $this->decodeAuthors($audioVisual);
+          }
+  
+          return response()->json($audioVisuals);
+      }
+  
+      // Get a specific audio-visual material by accession
+      public function getAudioVisualByAccession($accession)
+      {
+          $audioVisual = Material::where('material_type', 3)
+              ->where('accession', $accession)
+              ->first();
+  
+          if ($audioVisual) {
+              $this->processImageURL($audioVisual);
+              $this->decodeAuthors($audioVisual);
+              return response()->json($audioVisual);
+          } else {
+              return response()->json(['error' => 'Audio-visual material not found'], 404);
+          }
+      }
+  
+      // Search audio-visuals
+      public function searchAudioVisuals(Request $request)
+      {
+          $query = $request->input('query');
+  
+          if (empty($query)) {
+              return response()->json(['message' => 'Please provide a search query.'], 400);
+          }
+  
+          $audioVisuals = Material::where('title', 'LIKE', "%{$query}%")
+              ->where('material_type', 3)
+              ->get();
+  
+          foreach ($audioVisuals as $audioVisual) {
+              $this->processImageURL($audioVisual);
+              $this->decodeAuthors($audioVisual);
+          }
+  
+          return response()->json($audioVisuals);
+      }
+
+
+  
 }
