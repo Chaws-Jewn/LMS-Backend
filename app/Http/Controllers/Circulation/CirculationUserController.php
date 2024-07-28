@@ -12,23 +12,51 @@ use App\Models\Material;
 class CirculationUserController extends Controller
 {   
     public function userlist(Request $request){
-        $users = User::with( 'patron')->whereJsonContains('role', 'student')->get();
-        return response()->json($users->map(function($users){
-            return[
-                'id' => $users->id,
-                'fname' => $users->first_name,
-                'lname' => $users->last_name,
-                'gender' => $users->gender == 1 ? 'male' : 'female',
-                'email' => $users->domain_email,
-                'department' => $users->program,
+        $users = User::with('program', 'patron', 'student_program')->whereJsonContains('role', 'student')->get();
+    
+        $userList = $users->map(function($user) {
+            return [
+                'id' => $user->id,
+                'fname' => $user->first_name,
+                'lname' => $user->last_name,
+                'gender' => $user->gender == 1 ? 'male' : 'female',
+                'email' => $user->domain_email,
+                'department' => optional($user->student_program)->department_short ?? 'No department', // Debugging info
+                'program' => optional($user->student_program)->program_short ?? 'No program', // Debugging info
             ];
-        }));
+        });
+    
+        return response()->json($userList);
     }
     public function getUser(Request $request, int $id) {
-        return User::with('program', 'patron')->findOrFail($id);
+        $getuser =  User::with('program', 'patron', 'student_program')->findOrFail($id);
+        return response()->json([
+                'id' => $getuser->id,
+                'patron' => $getuser->patron->patron,
+                'first_name' => $getuser->first_name,
+                'last_name' => $getuser->last_name,
+                'department' =>$getuser->student_program->department_short,
+                'program' =>$getuser->student_program->program_short,
+                'gender' => $getuser->gender,
+                'books_allowed' => $getuser->patron->materials_allowed,
+                'fine' => $getuser->patron->fine,
+                'hours_allowed' => $getuser->patron->hours_allowed,
+                
+            ]);
     }
-    public function getBook(Request $request, string $accession) {
-        return Material::with('book_location')->findOrFail($accession);
+    public function getBook(Request $request) {
+        $accession = $request->query('accession');
+        $title = $request->query('title');
+    
+        if ($accession) {
+            $book = Material::with('book_location')->where('accession', $accession)->firstOrFail();
+        } elseif ($title) {
+            $book = Material::with('book_location')->where('title', $title)->firstOrFail();
+        } else {
+            return response()->json(['error' => 'Accession or title must be provided'], 400);
+        }
+    
+        return response()->json($book);
     }
 
     //for test 

@@ -244,13 +244,15 @@ Route::group(['middleware' => ['auth:sanctum', 'ability:circulation']], function
     Route::get('/circulation/borrow-count/{id}', [BorrowMaterialController::class, 'borrowcount']);
 
     //get individual book & user || for autofill front end
-    Route::get('/circulation/get-book/{accession}', [CirculationUserController::class, 'getBook']);
+    // Route::get('/circulation/get-book/{accession}', [CirculationUserController::class, 'getBook']);
+    Route::get('/circulation/get-book', [CirculationUserController::class, 'getBook']);
+
     Route::get('/circulation/get-user/{id}', [CirculationUserController::class, 'getUser']);
 
     //circulation report
     Route::get('/circulation/report', [CirculationReport::class, 'report']);
-    Route::get('/circulation/topborrowers', [BorrowMaterialController::class, 'topborrowers']);
-    Route::get('/circulation/mostborrowed', [BorrowMaterialController::class, 'mostborrowed']);
+    Route::get('/circulation/topborrowers', [CirculationReport::class, 'topborrowers']);
+    Route::get('/circulation/mostborrowed', [CirculationReport::class, 'mostborrowed']);
 
     //delete
     Route::delete('/circulation/delete-borrowlist/{id}', [BorrowMaterialController::class, 'destroy']);

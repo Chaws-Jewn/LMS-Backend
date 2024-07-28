@@ -36,17 +36,17 @@ class ReserveBookController extends Controller
             // Check if the book_id exists in the materials table
             $material = Material::find($payload['book_id']);
             if (!$material) {
-                return response()->json(['error' => 'Material not found'], 404);
+                return response()->json(['error' => 'Book not found'], 404);
             }
     
             // Check if the material status allows reservation
-            if ($material->status == 0) {
-                return response()->json(['error' => 'Book is currently borrowed'], 400);
-            }
+            // if ($material->status == 0) {
+            //     return response()->json(['error' => 'Book is currently borrowed'], 400);
+            // }
     
-            if ($material->status == 3) {
-                return response()->json(['error' => 'Book has not been returned'], 400);
-            }
+            // if ($material->status == 3) {
+            //     return response()->json(['error' => 'Book has not been returned'], 400);
+            // }
     
             // User and patron information
             $user = User::find($payload['user_id']);
@@ -85,9 +85,9 @@ class ReserveBookController extends Controller
                 $reservation->status = 2; // Status 2 for active reservation
                 $reservation->save();
     
-                // Update the material status to indicate it's reserved
-                $material->status = 2; // Update with appropriate status value
-                $material->save();
+                // // Update the material status to indicate it's reserved
+                // $material->status = 2; // Update with appropriate status value
+                // $material->save();
     
                 // Commit the transaction
                 DB::commit();

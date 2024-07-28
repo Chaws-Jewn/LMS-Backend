@@ -22,7 +22,7 @@ class BorrowMaterial extends Model
     ];
 
         public function material() {
-            return $this->belongsTo(material::class, 'book_id', 'accession');
+            return $this->belongsTo(material::class, 'book_id', 'accession', 'title');
         }
 
         public function user(){
