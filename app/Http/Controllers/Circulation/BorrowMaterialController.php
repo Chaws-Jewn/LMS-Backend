@@ -184,7 +184,10 @@ class BorrowMaterialController extends Controller
                 'department' => $borrowMaterial->user->student_program->department_short,
                 'program' => $borrowMaterial->user->student_program->program_short,
                 'title' => $borrowMaterial->material->title,
+                'accession' => $borrowMaterial->material->accession,
                 'status' => $borrowMaterial->status,
+                'borrow_date' => $borrowMaterial->borrow_date,
+                'borrow_expiration' => $borrowMaterial->borrow_expiration,
                 'fine' => $borrowMaterial->fine,
             ];
         }));
