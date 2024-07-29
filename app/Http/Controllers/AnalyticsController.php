@@ -153,11 +153,12 @@ class AnalyticsController extends Controller
         return response()->json(['totalOccupiedBooks' => $totalOccupiedBooks]);
     }
 
+    //unreturned/borrowed
     public function getUnreturnedBooks()
     {
         try {
             $unreturnedBooks = DB::table('materials')
-                ->where('inventory_status', '1')
+                ->where('status', '1')
                 ->count();
 
             return response()->json(['unreturned_books' => $unreturnedBooks]);
