@@ -50,7 +50,7 @@ class BorrowMaterialController extends Controller
         }
 
         // Check if the material status allows borrowing || 1 = available
-        if ($material->status !== 1) {
+        if ($material->status !== 0) {
             return response()->json(['error' => 'Book is currently borrowed or not available'], 400);
         }
 
@@ -90,7 +90,7 @@ class BorrowMaterialController extends Controller
             $borrowMaterial->save();
 
             // Update the material status
-            $material->status = 0; // Update with appropriate status value
+            $material->status = 1; // Update with appropriate status value
             $material->save();
 
             // Log the borrowing activity
@@ -142,7 +142,7 @@ class BorrowMaterialController extends Controller
         }
 
         // Check if the book is available for borrowing 
-        if ($material->status != 1) {
+        if ($material->status != 0) {
             return response()->json(['error' => 'This book is currently borrowed or not available'], 403);
         }
 
@@ -302,8 +302,8 @@ class BorrowMaterialController extends Controller
                 return response()->json(['error' => 'Material not found'], 404);
             }
 
-            // Set material status to 'available' (assuming you have a status field)
-            $material->status = 1;
+            // Set material status to 'available'
+            $material->status = 0;
 
             // Save the changes to the Material
             $material->save();
