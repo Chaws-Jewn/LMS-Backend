@@ -158,6 +158,7 @@ class ReserveBookController extends Controller
                 'book_id' => $reservation->book_id,
                 'title' => $reservation->material->title,
                 'reserve_date' => $reservation->reserve_date,
+                'reserve_expiration' =>$reservation->reserve_expiration,
                 'queue_position' => $reservation->queue_position,
                 'status_label' => $reservation->status_label,
                 'mode_of_reservation' => $reservation->reservation_type == 1 ? 'face to face' : 'online',

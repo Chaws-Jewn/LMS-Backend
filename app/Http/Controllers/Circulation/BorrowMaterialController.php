@@ -120,50 +120,54 @@ class BorrowMaterialController extends Controller
     }
 
     public function fromreservation(Request $request, $id)
-    {
-        // Set the borrow_date to now and borrow_expiration to one week later
-        $borrow_date = Carbon::now();
-        $borrow_expiration = Carbon::now()->addWeek();
+{
+    // Set the borrow_date to now and borrow_expiration to one week later
+    $borrow_date = Carbon::now();
+    $borrow_expiration = Carbon::now()->addWeek();
 
-        // Find the record in the BorrowMaterial table by id
-        $borrowMaterial = BorrowMaterial::find($id);
+    // Find the record in the BorrowMaterial table by id
+    $borrowMaterial = BorrowMaterial::find($id);
 
-        // Check if the record exists
-        if (!$borrowMaterial) {
-            return response()->json(['message' => 'Record not found'], 404);
-        }
-
-        // Get the book_id from the request data and find the material
-        $material = Material::find($request->input('book_id'));
-
-        // Check if the book exists
-        if (!$material) {
-            return response()->json(['error' => 'Book not found'], 404);
-        }
-
-        // Check if the book is available for borrowing 
-        if ($material->status != 0) {
-            return response()->json(['error' => 'This book is currently borrowed or not available'], 403);
-        }
-
-        // Get the queue_position from the request data
-        $queuePosition = $request->input('queue_position');
-        \Log::info('Received queue_position:', ['queue_position' => $queuePosition]);
-        // Check if the queue_position is 1
-        if ($queuePosition != '1') {
-        return response()->json(['message' => 'Only items with queue position 1 can be borrowed'], 400);
-        }
-
-        // Update only the borrow_date and borrow_expiration fields
-        $borrowMaterial->update([
-            'borrow_date' => $borrow_date,
-            'borrow_expiration' => $borrow_expiration,
-            'status' => 1,
-        ]);
-
-        // Return a response
-        return response()->json(['message' => 'Record updated successfully'], 200);
+    // Check if the record exists
+    if (!$borrowMaterial) {
+        return response()->json(['message' => 'Record not found'], 404);
     }
+
+    // Get the book_id from the request data and find the material
+    $material = Material::find($request->input('book_id'));
+
+    // Check if the book exists
+    if (!$material) {
+        return response()->json(['error' => 'Book not found'], 404);
+    }
+
+    // Check if the book is available for borrowing 
+    if ($material->status != 0) {
+        return response()->json(['error' => 'This book is currently borrowed or not available'], 403);
+    }
+
+    // Get the queue_position from the request data
+    $queuePosition = $request->input('queue_position');
+    \Log::info('Received queue_position:', ['queue_position' => $queuePosition]);
+
+    // Check if the queue_position is 1
+    if ($queuePosition != '1') {
+        return response()->json(['message' => 'Only items with queue position 1 can be borrowed'], 400);
+    }
+
+    // Update the borrow_date, borrow_expiration, and status in BorrowMaterial table
+    $borrowMaterial->update([
+        'borrow_date' => $borrow_date,
+        'borrow_expiration' => $borrow_expiration,
+        'status' => 1,
+    ]);
+
+    // Update the status of the material in the Material table to 1 (borrowed)
+    $material->update(['status' => 1]);
+
+    // Return a response
+    return response()->json(['message' => 'Record updated successfully'], 200);
+}
         
         
     public function borrowlist(Request $request)
