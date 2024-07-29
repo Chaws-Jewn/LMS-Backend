@@ -111,7 +111,7 @@ class CirculationReport extends Controller
             $dateTo = $request->input('date_to', null);
     
             // Build the query with filters
-            $query = BorrowMaterial::with(['user.student_program'])
+            $query = BorrowMaterial::with(['user.student_program' , 'user.patron'])
                 ->select('user_id', DB::raw('COUNT(*) as borrow_count'))
                 ->whereNotNull('borrow_date')
                 ->groupBy('user_id')
@@ -149,6 +149,9 @@ class CirculationReport extends Controller
                     'borrow_count' => $borrowMaterial->borrow_count,
                     'last_name' => $borrowMaterial->user->last_name,
                     'first_name' => $borrowMaterial->user->first_name,
+                    'patron' => $borrowMaterial->user->patron->patron,
+                    'department' => $borrowMaterial->user->student_program->department_short,
+                    'program' => $borrowMaterial->user->student_program->program_short,
                 ];
             });
     
@@ -173,7 +176,7 @@ class CirculationReport extends Controller
 
             // Build the query with filters
             $query = BorrowMaterial::select('book_id', DB::raw('COUNT(*) as borrow_count'))
-                ->with('material:title,accession')
+                ->with('material:title,accession,location,publisher,date_published')
                 ->groupBy('book_id')
                 ->orderByDesc('borrow_count');
 
@@ -207,7 +210,10 @@ class CirculationReport extends Controller
                 return [
                     'book_id' => $book->book_id,
                     'borrow_count' => $book->borrow_count,
-                    'title' => $book->material->title
+                    'title' => $book->material->title ?? 'No title available',
+                    'location' => $book->material->location ?? 'No location available',
+                    'publisher' => $book->material->publisher ?? 'No publisher available',
+                    'date_published' => $book->material->date_published ?? 'No date available',
                 ];
             });
 

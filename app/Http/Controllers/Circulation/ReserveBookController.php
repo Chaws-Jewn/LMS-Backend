@@ -252,6 +252,23 @@ class ReserveBookController extends Controller
             return response()->json(['message' => 'Failed to delete reservation', 'error' => $e->getMessage()], 500);
         }
     }
+
+    public function cancelReservation (Request $request, $id)
+    {
+        // Find the record in the BorrowMaterial table by id
+        $borrowMaterial = BorrowMaterial::find($id);
+
+        // Check if the record exists
+        if (!$borrowMaterial) {
+            return response()->json(['message' => 'Record not found'], 404);
+        }
+
+        $borrowMaterial->update([
+            'status' => 3 // Assuming '3' is the status code for 'cancelled'
+        ]);
+
+        return response()->json(['message' => 'Reservation cancelled successfully']);
+    }
     
 }
 

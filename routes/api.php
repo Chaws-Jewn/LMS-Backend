@@ -232,6 +232,7 @@ Route::group(['middleware' => ['auth:sanctum', 'ability:circulation']], function
     Route::get('/circulation/reservation-list/{type}', [ReserveBookController::class, 'reservelist']);
     Route::get('/circulation/reservelist', [ReserveBookController::class, 'allreserve']);
     Route::get('/circulation/queue', [ReserveBookController::class, 'queue']);
+    Route::put('/circulation/cancel/{id}', [ReserveBookController::class, 'cancelReservation']);
 
     //borrow book
     Route::post('/circulation/borrow/book', [BorrowMaterialController::class, 'borrowbook']);
