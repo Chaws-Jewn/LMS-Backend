@@ -7,30 +7,11 @@ use App\Models\LockersHistory;
 
 class LockerHistoryController extends Controller
 {
-    public function saveLog($log)
-    {
-        
-        file_put_contents(
-            base_path('admin-lockers.log'), // Path to the log file
-            date("Y-m-d H:i:s") . ';' . $log->username . ';' . $log->fullname . ';' . $log->position . ';' . $log->program . ';' . $log->desc . ';' . $log->device . PHP_EOL,
-            FILE_APPEND | LOCK_EX
-        );
-    }
 
     public function getLockerHistory()
     {
         // Retrieve locker logs along with locker details sorted by created_at descending
         $logWithLockers = LockersHistory::with('locker')->orderBy('created_at', 'desc')->get();
-
-        // Log the action
-        $log = new \stdClass();
-        $log->username = auth()->user()->username ?? 'guest';
-        $log->fullname = auth()->user()->name ?? 'Guest User';
-        $log->program = 'Get Locker History';
-        $log->desc = 'Retrieved locker History along with locker details';
-        $log->device = request()->header('User-Agent');
-
-        $this->saveLog($log);
 
         return response()->json($logWithLockers, 200);
     }
@@ -85,18 +66,6 @@ class LockerHistoryController extends Controller
             $perPage = $request->input('per_page', 10);
             $lockersHistoryWithUsers = $query->paginate($perPage);
         }
-
-        // Log the action
-        $user = auth()->user();
-        $log = new \stdClass();
-        $log->username = $user ? $user->username : 'admin';
-        $log->fullname = $user ? $user->name : 'Admin';
-        $log->position = $user ? $user->position : 'Unknown';
-        $log->program = 'Fetch Locker History With Users';
-        $log->desc = 'Fetched lockers History with users with filters';
-        $log->device = $request->header('User-Agent');
-
-        $this->saveLog($log);
 
         return response()->json($lockersHistoryWithUsers);
     }

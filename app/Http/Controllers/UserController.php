@@ -65,7 +65,7 @@ class UserController extends Controller
         $logParam = new \stdClass(); // Instantiate stdClass
 
         $currentUser = $request->user();
-        $logParam->system = 'User Management';
+        $logParam->system = 'Maintenance';
         $logParam->username = $currentUser->username;
         $logParam->fullname = $currentUser->first_name . ' ' . $currentUser->middle_name . ' ' . $currentUser->last_name . ' ' . $currentUser->ext_name;
         $logParam->position = $currentUser->position;
@@ -108,7 +108,7 @@ class UserController extends Controller
         $logParam = new \stdClass(); // Instantiate stdClass
 
         $currentUser = $request->user();
-        $logParam->system = 'User Management';
+        $logParam->system = 'Maintenance';
         $logParam->username = $currentUser->username;
         $logParam->fullname = $currentUser->first_name . ' ' . $currentUser->middle_name . ' ' . $currentUser->last_name . ' ' . $currentUser->ext_name;
         $logParam->position = $currentUser->position;
@@ -134,7 +134,7 @@ class UserController extends Controller
         $logParam = new \stdClass(); // Instantiate stdClass
 
         $currentUser = request()->user();
-        $logParam->system = 'User Management';
+        $logParam->system = 'Maintenance';
         $logParam->username = $currentUser->username;
         $logParam->fullname = $currentUser->first_name . ' ' . $currentUser->middle_name . ' ' . $currentUser->last_name . ' ' . $currentUser->ext_name;
         $logParam->position = $currentUser->position;

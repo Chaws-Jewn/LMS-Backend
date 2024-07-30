@@ -16,7 +16,7 @@ class AuthController extends Controller
 {
 
     // const URL = 'http://26.68.32.39:8000';
-    const URL = 'http://26.68.32.39:8000';
+    const URL = 'http://192.168.18.185:8000';
     // public function studentLogin(Request $request) {
     //     $auth_url = 'http://127.0.0.1:8001/api/login';
     //     $details = Http::get($auth_url)->json();
@@ -133,7 +133,7 @@ class AuthController extends Controller
                     $logParam->desc = 'Attempted to log in GC-LMS ' . Str::title($system);
     
                     $log->savePersonnelLog($logParam);
-                    return response()->json(['message' => 'Unauthorized User'], 403);
+                    return response()->json(['message' => 'Unauthorized'], 401);
                 };
 
                 
@@ -167,7 +167,7 @@ class AuthController extends Controller
                 $log->saveStudentLog($logParam);
                 return response()->json($responseData, 200);
             } else {
-                return response()->json(['message' => 'Unauthorized'], 403);
+                return response()->json(['message' => 'Unauthorized'], 401);
             }
         } else {
             return response()->json(['message' => 'Invalid credentials'], 401);

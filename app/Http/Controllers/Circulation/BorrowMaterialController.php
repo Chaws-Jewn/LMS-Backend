@@ -337,7 +337,7 @@ class BorrowMaterialController extends Controller
     {
         // Find the record
         $borrowMaterial = BorrowMaterial::find($id);
-        $book = Book::find($id);
+        $book = material::find($id);
         if (!$book) {
             return response()->json(['error' => 'Book not found'], 404);
         }

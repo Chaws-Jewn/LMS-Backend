@@ -247,7 +247,7 @@ class ExcelImportController extends Controller
 
         $results = DB::transaction(function() use ($sheetData, $headers) {
 
-            $failed = []; $exceed = false; $inputError = false;
+            $failed = []; $success = []; $exceed = false; $inputError = false;
             foreach ($sheetData as $row) {
                 $book = new Material();
                 $accession = '';
@@ -365,12 +365,13 @@ class ExcelImportController extends Controller
 
                 try {
                     $book->save();
+                    array_push($success, $book->accession);
                 } catch (Exception $e) {
                     if(count($failed) < 5) array_push($failed, ['accession' => $accession, 'title' => $title]);
                     else $exceed = true;
                     continue; // skip saving when it has error
                 }
-            } return ['failed' => $failed, 'exceedingError' => $exceed, 'inputError' => $inputError];
+            } return ['success' => count($success), 'failed' => $failed, 'exceedingError' => $exceed, 'inputError' => $inputError];
         });
 
         Storage::delete($filePath);
@@ -380,8 +381,11 @@ class ExcelImportController extends Controller
         if($results['inputError']) $errorText .= 'Preceding rows have error on values. ';
         if($results['exceedingError']) $errorText .= 'Number of failed imports exceeds size limit. ';
         if($results['inputError'] || $results['exceedingError']) $errorText .= 'Kindly check skipped records.';
+        if($results['success'] == 0) $message = 'No books have been imported. Check for duplicates and input errors';
+        else $message = 'Imported ' . $results['success'] . ' books successfully';
 
-        return response()->json(['message' => 'File uploaded and data imported successfully.',
+        return response()->json(['message' => $message,
+                                'success' => $results['success'],
                                 'failed imports' => $results['failed'],
                                 'error message' => $errorText], 200);
     }

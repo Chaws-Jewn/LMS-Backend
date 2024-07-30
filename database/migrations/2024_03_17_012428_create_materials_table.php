@@ -37,8 +37,6 @@ return new class extends Migration
 
             // 0 -> available, 1 -> borrowed, 2 -> reserved, 3 -> unavailable
             $table->tinyInteger('status')->nullable();
-            //0 -> available, 1 -> unreturned, 2 -> missing, 3 -> unlabeled, 4 -> damaged
-            $table->tinyInteger('inventory_status')->nullable();
 
             // PERIODICALS
             // 0 -> journal, 1 -> magazine, 2 -> article :: also applicable for articles
