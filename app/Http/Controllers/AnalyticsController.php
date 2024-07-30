@@ -36,7 +36,6 @@ class AnalyticsController extends Controller
                                         ->join('users', 'users.id', '=', 'borrow_materials.user_id')
                                         ->join('programs', 'users.program', '=', 'programs.program_short')
                                         ->select('users.id', 'users.first_name', 'users.last_name', 'programs.department_short', 'materials.title', 'borrow_materials.borrow_date')
-                                        ->where('borrow_materials.date_returned', null)
                                         ->get();
 
         return $borrowHistory;
@@ -158,6 +157,7 @@ class AnalyticsController extends Controller
     {
         try {
             $unreturnedBooks = DB::table('materials')
+                ->where('material_type', 0) 
                 ->where('status', '1')
                 ->count();
 
