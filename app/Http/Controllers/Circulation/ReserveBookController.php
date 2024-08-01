@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Http\Request;
 use App\Http\Controllers\BorrowMaterialController;
+use Illuminate\Support\Facades\Auth;
+use App\Http\Controllers\ActivityLogController;
 //use App\Models\Reservation;
 use App\Models\BorrowMaterial;
 use App\Models\User;
@@ -70,6 +72,17 @@ class ReserveBookController extends Controller
             if ($activeReservationsCount >= $materialsAllowed) {
                 return response()->json(['error' => 'User already has the maximum number of active reservations allowed'], 400);
             }
+
+            //check if user has active reservation for book
+            $existingReservation = BorrowMaterial::where('user_id', $payload['user_id'])
+            ->where('book_id', $payload['book_id'])
+            ->where('status', 2) // Active reservation status
+            ->exists();
+
+            if ($existingReservation) {
+                DB::rollBack();
+                return response()->json(['error' => 'Multiple reservations for the same book are not allowed'], 400);
+            }
     
             // Use a transaction to ensure both operations happen at the same time
             DB::beginTransaction();
@@ -88,6 +101,21 @@ class ReserveBookController extends Controller
                 // // Update the material status to indicate it's reserved
                 // $material->status = 2; // Update with appropriate status value
                 // $material->save();
+
+
+                // Log the borrowing activity
+                // system - worker - position - || created borrow instance for || username - student id || with || book title 
+                $log = new ActivityLogController();
+
+                $logParam = new \stdClass(); // Instantiate stdClass
+                $currentUser = Auth::user();
+                $logParam->system = 'Circulation';
+                $logParam->username = $currentUser->username;
+                $logParam->fullname = $currentUser->first_name . ' ' . $currentUser->middle_name . ' ' . $currentUser->last_name . ' ' . $currentUser->ext_name;
+                $logParam->position = $currentUser->position;
+                $logParam->desc = 'Reserve Instance for '. $user->first_name . ' with book = ' . $material->title;
+
+                $log->savePersonnelLog($logParam);
     
                 // Commit the transaction
                 DB::commit();
@@ -258,11 +286,26 @@ class ReserveBookController extends Controller
     {
         // Find the record in the BorrowMaterial table by id
         $borrowMaterial = BorrowMaterial::find($id);
+        $user = BorrowMaterial::find($id);
 
         // Check if the record exists
         if (!$borrowMaterial) {
             return response()->json(['message' => 'Record not found'], 404);
         }
+
+        // Log the cancelation activity
+            // system - worker - position - || created borrow instance for || username - student id || with || book title 
+            $log = new ActivityLogController();
+
+            $logParam = new \stdClass(); // Instantiate stdClass
+            $currentUser = Auth::user();
+            $logParam->system = 'Circulation';
+            $logParam->username = $currentUser->username;
+            $logParam->fullname = $currentUser->first_name . ' ' . $currentUser->middle_name . ' ' . $currentUser->last_name . ' ' . $currentUser->ext_name;
+            $logParam->position = $currentUser->position;
+            $logParam->desc = ' Cancelation of Reserve for '. $user->user_id . ' with book = ' . $borrowMaterial->book_id;
+
+            $log->savePersonnelLog($logParam);
 
         $borrowMaterial->update([
             'status' => 3 // Assuming '3' is the status code for 'cancelled'

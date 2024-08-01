@@ -314,6 +314,7 @@ Route::group(['middleware' => ['auth:sanctum', 'ability:circulation']], function
 
             //borrow shis
             Route::get('borrowed/user/{user_id}', [StudentReservationController::class, 'getBorrowedByUserId']);
+            Route::get('borrow/user/{user_id}', [StudentReservationController::class, 'getBorrowByUserId']);
             Route::get('borrowed/{id}', [StudentReservationController::class, 'getBorrowedById']);
 
 

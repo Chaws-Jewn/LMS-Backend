@@ -37,9 +37,9 @@ class UserSeeder extends Seeder
         ]);
 
         User::factory()->create([
-            'role' => json_encode(['opac']),
-            'position' => 'OPAC User',
-            'username' => 'opac',
+            'role' => json_encode(['locker']),
+            'position' => 'Front Desk',
+            'username' => 'locker',
             'password' => Hash::make('Admin123')
         ]);
 
@@ -50,11 +50,6 @@ class UserSeeder extends Seeder
         //     'username' => 'frontdesk',
         //     'password' => Hash::make('Admin123')
         // ]);
-
-        /* RANDOM USERS */
-        User::factory()->count(20)->create([
-            'role' => json_encode(['student'])
-        ]);
         
         User::factory()->create([
             'role' => json_encode(['student']),
@@ -104,7 +99,7 @@ class UserSeeder extends Seeder
             'role' => json_encode(['student']),
             'id' => 202110265,
             'program' => 'BACOMM',
-            'gender' => 1,
+            'gender' => 0,
             'first_name' => 'Nichole',
             'last_name' => 'Velasco',
             'username' => '202110265',
@@ -121,6 +116,99 @@ class UserSeeder extends Seeder
             'first_name' => 'Venerson',
             'last_name' => 'Tabinas',
             'username' => '202110259',
+            'password' => Hash::make('123')
+        ]);
+
+        // newly added 
+        User::factory()->create([
+            'role' => json_encode(['student']),
+            'id' => 202110266,
+            'program' => 'BSED-MATH',
+            'gender' => 1,
+            'first_name' => 'Lance',
+            'last_name' => 'Versoza',
+            'username' => '202110266',
+            'password' => Hash::make('123')
+        ]);
+
+        User::factory()->create([
+            'role' => json_encode(['student']),
+            'id' => 202110865,
+            'program' => 'BSCA',
+            'gender' => 0,
+            'first_name' => 'Czarina Jane',
+            'last_name' => 'Arellano',
+            'username' => '202110865',
+            'password' => Hash::make('123')
+        ]);
+
+        User::factory()->create([
+            'role' => json_encode(['student']),
+            'id' => 202010387,
+            'program' => 'BSHM',
+            'gender' => 0,
+            'first_name' => 'Maxinne',
+            'last_name' => 'Ogale',
+            'username' => '202010387',
+            'password' => Hash::make('123')
+        ]);
+
+        User::factory()->create([
+            'role' => json_encode(['student']),
+            'id' => 202110066,
+            'program' => 'BSA',
+            'gender' => 0,
+            'first_name' => 'Pauleen',
+            'last_name' => 'Dalida',
+            'username' => '202110066',
+            'password' => Hash::make('123')
+        ]);
+
+        User::factory()->create([
+            'role' => json_encode(['student']),
+            'id' => 202110094,
+            'program' => 'BSED-SOC',
+            'gender' => 0,
+            'first_name' => 'Angel Mae',
+            'last_name' => 'Gaña',
+            'username' => '202110094',
+            'password' => Hash::make('123')
+        ]);
+
+    
+        User::factory()->create([
+            'role' => json_encode(['student']),
+            'id' => 202110187,
+            'program' => 'BSEMC',
+            'patron_id' => 2,
+            'gender' => 1,
+            'first_name' => 'Raven Andre',
+            'last_name' => 'Legarde',
+            'username' => '202110187',
+            'password' => Hash::make('123')
+        ]);
+
+        User::factory()->create([
+            'role' => json_encode(['student']),
+            'id' => 202110188,
+            'program' => 'BACOMM',
+            'gender' => 1,
+            'first_name' => 'Ehdrian Lester',
+            'last_name' => 'Lim',
+            'username' => '202110188',
+            'password' => Hash::make('123')
+        ]);
+
+    
+        User::factory()->create([
+            'role' => json_encode(['student']),
+            'id' => 202110189,
+            'program' => 'BCAED',
+            'patron_id' => 2,
+            'gender' => 1,
+            'first_name' => 'Brent Lemuel',
+            'last_name' => 'Llagas',
+            'username' => '202110189',
             'password' => Hash::make('123')
         ]);
     }

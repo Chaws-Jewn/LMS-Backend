@@ -77,7 +77,7 @@ class InventoryController extends Controller
 
         $user = $request->user();
 
-        $logParam->system = 'Library';
+        $logParam->system = 'Maintenance';
         $logParam->username = $user->username;
         $logParam->fullname = $user->first_name . ' ' . $user->middle_name . ' ' . $user->last_name . ' ' . $user->ext_name;
         $logParam->position = $user->position;
@@ -91,7 +91,7 @@ class InventoryController extends Controller
     public function clearBooksHistory() {
         Material::where('material_type', 0)
                 // ->where('status', 0)
-                ->update(['status' => 1]);
+                ->update(['status' => 0]);
 
         return response()->json(['success' => 'History has been cleared.'], 200);
     }

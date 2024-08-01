@@ -37,7 +37,7 @@ class StudentReservationController extends Controller
     }
 
     // Fetch fine amount for patron_id 1 (assuming it's always the same for online patrons)
-    $fineAmount = Patron::find(1)->fine ?? 500; // Default to 500 if not found
+    $fineAmount = Patron::find(1)->fine; // Default to 500 if not found
 
     // Validate reserve_date to ensure it is not in the past
     try {
@@ -77,18 +77,18 @@ class StudentReservationController extends Controller
             return response()->json(['error' => 'Patron not found'], 404);
         }
 
-        // Number of materials allowed for this patron
-        $materialsAllowed = $patron->materials_allowed;
+       // Number of materials allowed for this patron
+       $materialsAllowed = Patron::find(1)->materials_allowed;
 
-        // Allowed number of active reservations for the user
-        $activeReservationsCount = Reservation::where('user_id', $payload['user_id'])
-            ->where('status', 2) // 2 means active reservation
-            ->count();
+       // Allowed number of active reservations for the user
+       $activeReservationsCount = Reservation::where('user_id', $payload['user_id'])
+           ->where('status', 2) // 2 means active reservation
+           ->count();
 
-        if ($activeReservationsCount >= 3) {
-            DB::rollBack();
-            return response()->json(['error' => 'User already has the maximum number of active reservations allowed'], 400);
-        }
+       if ($activeReservationsCount >= $materialsAllowed) {
+           DB::rollBack();
+           return response()->json(['error' => 'User already has the maximum number of active reservations allowed'], 400);
+       }
 
         // Check if the user already has an active reservation for this book
         $existingReservation = Reservation::where('user_id', $payload['user_id'])
@@ -295,6 +295,24 @@ public function cancelReservation(Request $request, $id)
         // Retrieve reserved materials where status is 1
         $borrowedMaterials = BorrowMaterial::where('user_id', $user_id)
                             ->where('status', 1)
+                            ->get();
+
+        // Load relationships for each borrowed material
+        $borrowedMaterials->load('material', 'user');
+
+        // Adjust the response format as needed, ensuring it returns an array
+        return response()->json(['borrowedMaterials' => $borrowedMaterials]);
+
+    } catch (\Exception $e) {
+        return response()->json(['error' => 'Failed to fetch borrowed materials', 'details' => $e->getMessage()], 500);
+    }
+}
+public function getBorrowByUserId($user_id)
+{
+    try {
+        // Retrieve reserved materials where status is 1
+        $borrowedMaterials = BorrowMaterial::where('user_id', $user_id)
+                            ->where('status', 0)
                             ->get();
 
         // Load relationships for each borrowed material

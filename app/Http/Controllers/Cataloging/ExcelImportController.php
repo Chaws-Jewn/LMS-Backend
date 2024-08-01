@@ -10,6 +10,7 @@ use PhpOffice\PhpSpreadsheet\Reader\Csv;
 use App\Models\Material;
 use DateTime, DB, Exception, Date, Storage;
 use Log;
+use App\Http\Controllers\ActivityLogController;
 
 class ExcelImportController extends Controller
 {
@@ -254,8 +255,7 @@ class ExcelImportController extends Controller
                 $title = '';
 
                 $book->material_type = 0;
-                $book->status = 1;
-                $book->inventory_status = 0;
+                $book->status = 0;
 
                 foreach ($headers as $column => $header) {
                     $value = $row[$column];
@@ -375,6 +375,20 @@ class ExcelImportController extends Controller
         });
 
         Storage::delete($filePath);
+
+        $log = new ActivityLogController();
+
+        $logParam = new \stdClass(); // Instantiate stdClass
+
+        $user = $request->user();
+
+        $logParam->system = 'Cataloging';
+        $logParam->username = $user->username;
+        $logParam->fullname = $user->first_name . ' ' . $user->middle_name . ' ' . $user->last_name . ' ' . $user->ext_name;
+        $logParam->position = $user->position;
+        $logParam->desc = 'Imported ' . $results['success'] . ' books';
+
+        $log->savePersonnelLog($logParam);
 
         // Return a response
         $errorText = '';

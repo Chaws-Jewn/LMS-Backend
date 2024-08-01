@@ -12,7 +12,8 @@ use Illuminate\Http\JsonResponse;
 
 class StudentMaterialController extends Controller
 {
-    const URL = 'http://26.68.32.39:8000';
+    // const URL = 'http://26.68.32.39:8000';
+    const URL = 'http://192.168.243.174:8000';
 
     // View periodicals for student portal
     public function getPeriodicals() {
@@ -50,7 +51,8 @@ class StudentMaterialController extends Controller
             ->firstOrFail();
 
             $this->decodeAuthors($periodical);
-
+            $this->processImageURL($periodical);
+        
         return response()->json($periodical);
     }
 
@@ -83,20 +85,26 @@ class StudentMaterialController extends Controller
     // Search periodicals
     public function searchPeriodicals(Request $request) {
         $query = $request->input('query');
-
+    
         if (empty($query)) {
             return response()->json(['message' => 'Please provide a search query.'], 400);
         }
-
-        $periodicals = Material::where('title', 'LIKE', "%{$query}%")
-            ->where('material_type', 1)
-            ->get();
-
+    
+        // Normalize the query for case-insensitive search
+        $query = '%' . strtolower($query) . '%';
+    
+        $periodicals = Material::where(function($queryBuilder) use ($query) {
+            $queryBuilder->where('title', 'like', $query)
+                         ->orWhere('authors', 'like', $query);
+        })
+        ->where('material_type', 1)
+        ->get();
+    
         foreach ($periodicals as $periodical) {
             $this->processImageURL($periodical);
             $this->decodeAuthors($periodical);
         }
-
+    
         return response()->json($periodicals);
     }
 
@@ -156,19 +164,25 @@ class StudentMaterialController extends Controller
     // Search articles
     public function searchArticles(Request $request) {
         $query = $request->input('query');
-
+    
         if (empty($query)) {
             return response()->json(['message' => 'Please provide a search query.'], 400);
         }
-
-        $articles = Material::where('title', 'LIKE', "%{$query}%")
-            ->where('material_type', 2)
-            ->get();
-
+    
+        // Normalize the query for case-insensitive search
+        $query = '%' . strtolower($query) . '%';
+    
+        $articles = Material::where(function($queryBuilder) use ($query) {
+            $queryBuilder->where('title', 'like', $query)
+                         ->orWhere('authors', 'like', $query);
+        })
+        ->where('material_type', 2)
+        ->get();
+    
         foreach ($articles as $article) {
             $this->decodeAuthors($article);
         }
-
+    
         return response()->json($articles);
     }
 
@@ -202,22 +216,29 @@ class StudentMaterialController extends Controller
     // Search books
     public function searchBooks(Request $request) {
         $query = $request->input('query');
-
+    
         if (empty($query)) {
             return response()->json(['message' => 'Please provide a search query.'], 400);
         }
-
-        $books = Material::where('title', 'LIKE', "%{$query}%")
-            ->where('material_type', 0)
-            ->get();
-
+    
+        // Normalize the query for case-insensitive search
+        $query = '%' . strtolower($query) . '%';
+    
+        $books = Material::where(function($queryBuilder) use ($query) {
+            $queryBuilder->where('title', 'like', $query)
+                         ->orWhere('authors', 'like', $query);
+        })
+        ->where('material_type', 0)
+        ->get();
+    
         foreach ($books as $book) {
             $this->processImageURL($book);
             $this->decodeAuthors($book);
         }
-
+    
         return response()->json($books);
     }
+
 
     // Get all projects
     public function getProjects() {
@@ -333,7 +354,7 @@ public function getProjectsByProgram($departmentShort) {
               return response()->json(['message' => 'Please provide a search query.'], 400);
           }
   
-          $audioVisuals = Material::where('title', 'LIKE', "%{$query}%")
+          $audioVisuals = Material::where('title', 'authors', "%{$query}%")
               ->where('material_type', 3)
               ->get();
   

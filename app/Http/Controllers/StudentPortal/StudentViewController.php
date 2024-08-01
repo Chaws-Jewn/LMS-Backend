@@ -11,8 +11,10 @@ use Illuminate\Support\Facades\Storage;
 
 class StudentViewController extends Controller
 {
-    const URL = 'http://192.168.18.185:8000';
+    // const URL = 'http://192.168.18.185:8000';
     // const URL = 'http://127.0.0.1:8000';
+    const URL = 'http://192.168.243.174:8000';
+
     // BOOKS
     public function viewBooks() {+
         
@@ -178,6 +180,7 @@ class StudentViewController extends Controller
         $announcement = Announcement::with('author')->findOrFail($id);
         $announcement->author_name = $announcement->author->first_name . ' ' . $announcement->author->last_name;
         unset($announcement->author);
+        if($announcement->image_url) $announcement->image_url = self::URL . Storage::url($announcement->image_url);
         return response()->json($announcement);
     }
 

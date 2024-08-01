@@ -12,7 +12,8 @@ use Illuminate\Support\Facades\Storage;
 class OPACMaterialsController extends Controller
 {
     // const URL = 'http://26.68.32.39:8000';
-    const URL = 'http://192.168.18.185:8000';
+    // const URL = 'http://192.168.18.185:8000';
+    const URL = 'http://192.168.243.174:8000';
 
     public function getBooks() {      
         // $books = Material::where('material_type', 0)->get(['accession', 'title', 'edition', 'date_published', 'authors', 'image_url', 'volume']);  
