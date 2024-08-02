@@ -38,7 +38,7 @@ return new class extends Migration
             $table->foreignId('patron_id')->nullable()->constrained('patrons');
             $table->string('password');
             $table->rememberToken();
-        
+
             // details
             $table->string('first_name', 30);
             $table->string('middle_name', 30)->nullable();
@@ -46,15 +46,15 @@ return new class extends Migration
             $table->integer('gender')->nullable();
             $table->string('ext_name', 10)->nullable();
             $table->string('program')->nullable();
-            $table->string('position', 50)->nullable(); 
+            $table->string('position', 50)->nullable();
             $table->string('profile_image')->nullable();
-            
+
             // New columns
             $table->string('main_address')->nullable();
             $table->string('domain_email')->nullable();
-            
+
             $table->timestamps();
-            $table->softDeletes();  
+            $table->softDeletes();
 
             $table->foreign('program')->references('program_short')->on('programs');
         });

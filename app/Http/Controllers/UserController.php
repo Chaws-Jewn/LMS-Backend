@@ -127,9 +127,10 @@ class UserController extends Controller
 
     public function destroy($id)
     {
-        $user = User::findOrFail($id);
+        // Find the user by ID, including soft-deleted ones
+        $user = User::withTrashed()->findOrFail($id);
 
-        // Logging
+        // Log the deletion activity
         $log = new ActivityLogController();
         $logParam = new \stdClass(); // Instantiate stdClass
 
@@ -142,10 +143,17 @@ class UserController extends Controller
 
         $log->savePersonnelLog($logParam);
 
-        $user->delete();
+        // Soft delete the user (if not already deleted)
+        if (!$user->trashed()) {
+            $user->delete();
+            $message = 'User deleted successfully';
+        } else {
+            $message = 'User was already deleted';
+        }
 
+        // Return a JSON response indicating success
         return response()->json([
-            'message'=> 'User deleted successfully',
+            'message' => $message,
         ]);
     }
 }
