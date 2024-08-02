@@ -18,6 +18,7 @@ return new class extends Migration
             $table->enum('status', ['Occupied', 'Available', 'Unavailable', 'Damaged'])->default('Available');
             $table->string('remarks')->nullable();
             $table->timestamps();
+            $table->softDeletes();
         });
     }
 
