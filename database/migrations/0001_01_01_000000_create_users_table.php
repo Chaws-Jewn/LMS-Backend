@@ -29,6 +29,7 @@ return new class extends Migration
             $table->integer('hours_allowed')->nullable();
             $table->integer('materials_allowed')->nullable();
             $table->timestamps(1);
+            $table->softDeletes();
         });
 
         Schema::create('users', function (Blueprint $table) {

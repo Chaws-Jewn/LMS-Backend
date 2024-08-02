@@ -15,6 +15,7 @@ return new class extends Migration
             $table->string('location_short')->unique();
             $table->string('location_full')->nullable();
             $table->timestamps();
+            $table->softDeletes();
 
             $table->primary('location_short');
         });
