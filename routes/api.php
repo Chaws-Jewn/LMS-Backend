@@ -32,7 +32,7 @@ App\Http\Controllers\AnnouncementController, App\Http\Controllers\LockerHistoryC
 use App\Http\Controllers\Circulation\BorrowMaterialController, App\Http\Controllers\Circulation\CirculationUserController,
 App\Http\Controllers\Circulation\PatronController, App\Http\Controllers\Circulation\ReserveBookController, App\Http\Controllers\Circulation\CirculationReport;
 
-// FOR ALL USERS 
+// FOR ALL USERS
 Route::post('/studentlogin', [AuthController::class, 'studentLogin']);
 Route::get('/', function (Request $request) { return response()->json(['Response' => 'API routes are available']);});
 Route::post('/login/{system}', [AuthController::class, 'login']);
@@ -86,6 +86,8 @@ Route::middleware(['auth:sanctum', 'ability:maintenance'])->group(function () {
     //cataloging
     Route::get('/locations', [LocationController::class, 'getLocations']);
     Route::post('/locations', [LocationController::class, 'create']);
+    Route::put('locations/{id}', [LocationController::class, 'update']);
+    Route::delete('locations/{id}', [LocationController::class, 'destroy']);
 
     Route::prefix('maintenance/lockers')->group(function () {
         Route::get('/', [LockerController::class, 'index']);
