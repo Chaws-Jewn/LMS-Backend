@@ -150,14 +150,20 @@ class LockerController extends Controller
 
     public function destroy(Request $request, $id)
     {
-        $locker = Locker::findOrFail($id);
+        $locker = Locker::withTrashed()->findOrFail($id);
 
-        // Delete related records from lockers_logs
+        // Check if the locker is already soft-deleted
+        if ($locker->trashed()) {
+            return response()->json(['message' => 'Locker was already deleted'], 400);
+        }
+
+        // Soft delete related records from lockers_history if needed
         LockersHistory::where('locker_id', $id)->delete();
 
         // Set locker number in case it gets deleted
         $lockerNumber = $locker->locker_number;
 
+        // Soft delete the locker
         $locker->delete();
 
         // Log the action

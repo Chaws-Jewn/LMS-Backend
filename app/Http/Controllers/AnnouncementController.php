@@ -126,11 +126,17 @@ class AnnouncementController extends Controller
 
     public function destroy(Request $request, Announcement $announcement)
     {
+        // Check if the announcement is already soft-deleted
+        if ($announcement->trashed()) {
+            return response()->json(['message' => 'Announcement was already deleted'], 400);
+        }
+
         // Delete the file associated with the announcement if it exists
         if ($announcement->image_url) {
             Storage::disk('public')->delete($announcement->image_url);
         }
 
+        // Soft delete the announcement
         $announcement->delete();
 
         // Logging the announcement deletion
