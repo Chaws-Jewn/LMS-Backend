@@ -372,6 +372,7 @@ Route::group(['middleware' => ['auth:sanctum', 'ability:locker']], function () {
     Route::get('/college-program-counts', [LockerController::class, 'getcollegeProgramCounts']);
     Route::post('/locker/{lockerId}/scan', [LockerController::class, 'scanLockerQRCode']);
     Route::post('/locker/{lockerId}/scanLocker', [LockerController::class, 'scanLocker']);
+    Route::get('/locker-data', [LockerController::class, 'getLockerChartData']);
 
     //ADD LOCKER GALING SA MAINTENANCE DATI
     Route::prefix('/lockers')->group(function () {

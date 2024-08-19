@@ -10,6 +10,7 @@ use Validator;
 use App\Models\User;
 use DateTime;
 use App\Models\LockersHistory;
+use Illuminate\Support\Facades\DB; // Add this line
 
 
 class LockerController extends Controller
@@ -124,28 +125,40 @@ class LockerController extends Controller
 
     public function update(Request $request, $id)
     {
-        $data = Validator::make($request->all(), [
-            'status' => 'required|in:Occupied,Available,Unavailable',
-            'remarks' => 'nullable|string|max:256'
-        ]);
+        Log::info('Update Request Data:', $request->all());
 
-        if ($data->fails()) {
-            return response()->json(['errors' => $data->errors()], 400);
+        try {
+            // Validate the input data
+            $validator = Validator::make($request->all(), [
+                'status' => 'required|in:Occupied,Available,Damaged,Unavailable',
+                'remarks' => 'nullable|string|max:256'
+            ]);
+
+            if ($validator->fails()) {
+                Log::error('Validation Errors:', $validator->errors()->toArray());
+                return response()->json(['errors' => $validator->errors()], 400);
+            }
+
+            $locker = Locker::findOrFail($id);
+            $validatedData = $validator->validated();
+
+            // Handle remarks based on status
+            if ($validatedData['status'] === 'Available' || $validatedData['status'] === 'Damaged') {
+                $validatedData['remarks'] = null;
+            }
+
+            $locker->update($validatedData);
+
+            Log::info('Locker Updated Successfully:', ['id' => $id]);
+
+            return response()->json(['success' => $locker]);
+        } catch (\Exception $e) {
+            Log::error('Update Error:', [
+                'message' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            return response()->json(['error' => 'An unexpected error occurred.'], 500);
         }
-
-        $locker = Locker::findOrFail($id);
-        $validatedData = $data->validated();
-
-        if ($validatedData['status'] === 'Available') {
-            $validatedData['remarks'] = null;
-        }
-
-        $locker->update($validatedData);
-
-        $user = auth()->user();
-        $this->saveLog($user, 'Maintenance', 'Updated locker of id ' . $id);
-
-        return response()->json(['success' => $locker]);
     }
 
     public function destroy(Request $request, $id)
@@ -988,4 +1001,43 @@ class LockerController extends Controller
         // Return the response as JSON
         return response()->json($collegeCounts);
     }
+
+    public function getLockerChartData(Request $request)
+{
+    $fromDate = $request->input('from_date');
+    $toDate = $request->input('to_date');
+
+    Log::info('Received parameters:', ['from_date' => $fromDate, 'to_date' => $toDate]);
+
+    $query = DB::table('lockers_history')
+        ->select('locker_id', DB::raw('COUNT(*) as user_count'))
+        ->groupBy('locker_id');
+
+    if ($fromDate && $toDate) {
+        try {
+            $fromDate = new \DateTime($fromDate);
+            $toDate = new \DateTime($toDate);
+            $toDate->setTime(23, 59, 59); // Ensure the end date includes the entire day
+
+            // Check if fromDate is not after toDate
+            if ($fromDate > $toDate) {
+                return response()->json(['error' => 'From date cannot be after To date'], 400);
+            }
+
+            // Apply date filter
+            $query->whereBetween('time_in', [$fromDate->format('Y-m-d H:i:s'), $toDate->format('Y-m-d H:i:s')]);
+        } catch (\Exception $e) {
+            Log::error('Date format error:', ['error' => $e->getMessage()]);
+            return response()->json(['error' => 'Invalid date format'], 400);
+        }
+    }
+
+    $lockerData = $query->get();
+    Log::info('Returning data:', ['data' => $lockerData]);
+
+    // Log the query for debugging
+    Log::info('Executed query:', ['query' => $query->toSql(), 'bindings' => $query->getBindings()]);
+
+    return response()->json($lockerData);
+}
 }
