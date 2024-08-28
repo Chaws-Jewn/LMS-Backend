@@ -346,10 +346,16 @@ Route::group(['prefix' => 'opac'], function () {
     Route::get('/project/{id}', [OPACMaterialsController::class, 'getProject']);
 });
 
+
 // locker routes
 Route::group(['middleware' => ['auth:sanctum', 'ability:locker']], function () {
     Route::get('/lockers-log', [LockerHistoryController::class, 'getLockerHistory']);
     Route::get('/lockers-logs-with-users', [LockerHistoryController::class, 'fetchLockersHistoryWithUsers']);
+    Route::get('/search', [LockerHistoryController::class, 'search']);
+    Route::get('/lockerfilter', [LockerHistoryController::class, 'getLockersWithFilter']);
+    Route::get('/searchdata', [LockerHistoryController::class, 'getSearchData']);
+    Route::get('/all-department', [LockerHistoryController::class, 'getalldepartment']);
+
 
     //LOCKER MAINTENANCE
     Route::post('/locker', [LockerController::class, 'locker']);
@@ -373,6 +379,7 @@ Route::group(['middleware' => ['auth:sanctum', 'ability:locker']], function () {
     Route::post('/locker/{lockerId}/scan', [LockerController::class, 'scanLockerQRCode']);
     Route::post('/locker/{lockerId}/scanLocker', [LockerController::class, 'scanLocker']);
     Route::get('/locker-data', [LockerController::class, 'getLockerChartData']);
+
 
     //ADD LOCKER GALING SA MAINTENANCE DATI
     Route::prefix('/lockers')->group(function () {
