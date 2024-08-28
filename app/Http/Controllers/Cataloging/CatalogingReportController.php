@@ -14,9 +14,17 @@ class CatalogingReportController extends Controller
 
     public function countMaterials() {
         // for books
-        $books = Material::where('material_type', 0)->get('title');
-        $titles = $books->unique('title')->count();
+        $books = Material::where('material_type', 0)
+        ->get(['title', 'authors', 'publisher', 'copyright', 'volume', 'edition', 'pages', 'call_number', 'author_number']);
+
+        // Count distinct rows based on the combination of specified columns
+        $titles = $books->unique(function ($item) {
+            return $item['title'] . $item['authors'] . $item['publisher'] . $item['copyright'] . $item['volume'] . $item['edition'] . $item['pages'] . $item['call_number'] . $item['author_number'];
+        })->count();
+
+        // Count total rows
         $volumes = $books->count();
+
 
         // for materials
         $materials = Material::where('material_type', 1)->get('periodical_type');

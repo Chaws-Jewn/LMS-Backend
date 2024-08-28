@@ -18,18 +18,18 @@ class PeriodicalController extends Controller
     public function add(Request $request) {
         
         $request->validate([
-            'accession' => 'nullable|string|max:20',
-            'title' => 'required|string|max:255',
-            'authors' => 'required|string|max:255',
-            'publisher' => 'required|string|max:255',
+            'accession' => 'required|string|max:20',
+            'title' => 'nullable|string|max:255',
+            'authors' => 'nullable|string|max:255',
+            'publisher' => 'nullable|string|max:255',
             'remarks' => 'nullable|string|max:512',
             'pages' => 'required|integer|min:1',
-            'volume' => 'required|string|max:100',
-            'issue' => 'required|string|max:100',
+            'volume' => 'nullable|string|max:100',
+            'issue' => 'nullable|string|max:100',
             'language' => 'required|string|max:15',
             'acquired_date' => 'required|date',
             'date_published' => 'required|date',
-            'copyright' => 'required|integer|min:1900|max:'.date('Y'),
+            'copyright' => 'nullable|string',
             'image_url' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
         ]);
 
@@ -121,18 +121,18 @@ class PeriodicalController extends Controller
     public function update(Request $request, $id) {
 
         $request->validate([
-            'accession' => 'nullable|string|max:20',
-            'title' => 'required|string|max:255',
-            'authors' => 'required|string|max:255',
-            'publisher' => 'required|string|max:255',
+            'accession' => 'required|string|max:20',
+            'title' => 'nullable|string|max:255',
+            'authors' => 'nullable|string|max:255',
+            'publisher' => 'nullable|string|max:255',
             'remarks' => 'nullable|string|max:512',
             'pages' => 'required|integer|min:1',
-            'volume' => 'required|string|max:100',
-            'issue' => 'required|string|max:100',
+            'volume' => 'nullable|string|max:100',
+            'issue' => 'nullable|string|max:100',
             'language' => 'required|string|max:15',
             'acquired_date' => 'required|date',
             'date_published' => 'required|date',
-            'copyright' => 'required|integer|min:1900|max:'.date('Y'),
+            'copyright' => 'nullable|string',
             'image_url' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
         ]);
 

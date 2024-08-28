@@ -18,14 +18,14 @@ class ArticleController extends Controller
         $request->validate([
             'accession' => 'required|string|max:255',
             'periodical_type' => 'required|integer',
-            'title' => 'required|string|max:255',
-            'authors' => 'required|string|max:255',
-            'publisher' => 'required|string|max:255',
+            'title' => 'nullable|string|max:255',
+            'authors' => 'nullable|string|max:255',
+            'publisher' => 'nullable|string|max:255',
             'remarks' => 'nullable|string|max:255',
             'pages' => 'required|string|max:25',
             'abstract' => 'required|string|max: 4096',
-            'volume' => 'required|string|max:50',
-            'issue' => 'required|string|max:50',
+            'volume' => 'nullable|string|max:50',
+            'issue' => 'nullable|string|max:50',
             'language' => 'required|string|max:15',
             'subject' => 'required|string|max:255',
             'date_published' => 'required|date'
@@ -96,14 +96,14 @@ class ArticleController extends Controller
         $request->validate([
             'accession' => 'required|string|max:255',
             'periodical_type' => 'required|integer',
-            'title' => 'required|string|max:255',
-            'authors' => 'required|string|max:255',
-            'publisher' => 'required|string|max:255',
+            'title' => 'nullable|string|max:255',
+            'authors' => 'nullable|string|max:255',
+            'publisher' => 'nullable|string|max:255',
             'remarks' => 'nullable|string|max:255',
             'pages' => 'required|string|max:25',
             'abstract' => 'required|string|max: 4096',
-            'volume' => 'required|string|max:50',
-            'issue' => 'required|string|max:50',
+            'volume' => 'nullable|string|max:50',
+            'issue' => 'nullable|string|max:50',
             'language' => 'required|string|max:15',
             'subject' => 'required|string|max:255',
             'date_published' => 'required|date'
@@ -123,7 +123,7 @@ class ArticleController extends Controller
 
         try {
             $model->save();
-        } catch (\Illuminate\Database\QueryException $e) {
+        } catch (Exception $e) {
             if ($e->getCode() == 23000) {
                 return response()->json(['message' => 'Duplicate accession entry detected.'], 409); // HTTP status code 409 for conflict
             } else {

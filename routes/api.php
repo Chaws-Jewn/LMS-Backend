@@ -162,10 +162,10 @@ Route::group(['middleware' => ['auth:sanctum', 'ability:cataloging']], function 
             Route::post('audio-visuals/process', [AVController::class, 'add']);
 
             // Update Materials
-            Route::put('books/process/{id}', [BookController::class, 'update']);
-            Route::put('periodicals/process/{id}', [PeriodicalController::class, 'update']);
-            Route::put('articles/process/{id}', [ArticleController::class, 'update']);
-            Route::put('audio-visuals/process/{id}', [AVController::class, 'update']);
+            Route::post('books/process/{id}', [BookController::class, 'update']);
+            Route::post('periodicals/process/{id}', [PeriodicalController::class, 'update']);
+            Route::post('articles/process/{id}', [ArticleController::class, 'update']);
+            Route::post('audio-visuals/process/{id}', [AVController::class, 'update']);
         });
 
         // ARCHIVE Materials
@@ -190,7 +190,7 @@ Route::group(['middleware' => ['auth:sanctum', 'ability:cataloging']], function 
         Route::get('project/id/{id}', [ProjectController::class, 'getProject']);
         Route::get('projects/department/{department}', [ProjectController::class, 'getByDepartment']);
         Route::post('projects/process', [ProjectController::class, 'add']);
-        Route::put('projects/process/{id}', [ProjectController::class, 'update']);
+        Route::post('projects/process/{id}', [ProjectController::class, 'update']);
 
         // ARCHIVE VIEWING
         Route::group(['prefix' => 'archives'], function() {

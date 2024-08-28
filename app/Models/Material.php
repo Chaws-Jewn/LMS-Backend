@@ -17,7 +17,7 @@ class Material extends Model
                             'date_published', 'remarks', 'copyright', 
                             
                             // BOOKS
-                            'call_number', 'author_number', 'source_of_fund', 'price', 'status', 'inventory_status',
+                            'call_number', 'author_number', 'source_of_fund', 'price', 'status',
                         
                             // PERIODICALS
                             'periodical_type', 'language', 'issue',
