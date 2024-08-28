@@ -6,23 +6,24 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Material;
 use App\Http\Controllers\ActivityLogController;
-use Str;
+use Illuminate\Support\Str, Illuminate\Support\Facades\Storage;
 
 class AVController extends Controller
 {
     public function add(Request $request) {
         $request->validate([
             'accession' => 'required|string|max:255',
-            'title' => 'required|string|max:255',
-            'authors' => 'required|string|max:255',
+            'title' => 'nullable|string|max:255',
+            'authors' => 'nullable|string|max:255',
             'call_number' => 'required|string|max:50',
-            'copyright' => 'required|integer|min:1901|max:'.date('Y'),
+            'copyright' => 'nullable|string',
+            'image_url' => 'nullable|mimes:jpeg,jpg,png'
         ]);
 
         $model = new Material();
         $model->material_type = 3;
 
-        $model->fill($request->except(['title', 'authors']));
+        $model->fill($request->except(['title', 'authors', 'image_url']));
 
         $model->title = Str::title($request->title);
         $authors = json_decode($request->authors, true);
@@ -31,8 +32,21 @@ class AVController extends Controller
             $author = Str::title($author);
         }
 
-        $model->title = Str::title($request->title);
         $model->authors = json_encode($authors);
+
+        if($request->image_url != null) {
+            $ext = $request->file('image_url')->extension();
+
+            // Check file extension and raise error
+            if (!in_array($ext, ['png', 'jpg', 'jpeg'])) {
+                return response()->json(['Error' => 'Invalid image format. Only PNG, JPG, and JPEG formats are allowed.'], 415);
+            }
+
+            // Store image and save path
+            $path = $request->file('image_url')->store('public/images/books');
+
+            $model->image_url = $path;
+        }
         
         try {
             $model->save();
@@ -65,15 +79,16 @@ class AVController extends Controller
     public function update(Request $request, string $accession) {
         $request->validate([
             'accession' => 'required|string|max:255',
-            'title' => 'required|string|max:255',
-            'authors' => 'required|string|max:255',
+            'title' => 'nullable|string|max:255',
+            'authors' => 'nullable|string|max:255',
             'call_number' => 'required|string|max:50',
-            'copyright' => 'required|integer|min:1901|max:'.date('Y'),
+            'copyright' => 'nullable|string',
+            'image_url' => 'nullable|mimes:jpeg,jpg,png'
         ]);
 
         $model = Material::findOrFail($accession);
 
-        $model->fill($request->all());
+        $model->fill($request->except(['title', 'authors', 'image_url']));
 
         $model->title = Str::title($request->title);
         $authors = json_decode($request->authors, true);
@@ -82,8 +97,21 @@ class AVController extends Controller
             $author = Str::title($author);
         }
 
-        $model->title = Str::title($request->title);
         $model->authors = json_encode($authors);
+
+        if($request->image_url != null) {
+            $ext = $request->file('image_url')->extension();
+
+            // Check file extension and raise error
+            if (!in_array($ext, ['png', 'jpg', 'jpeg'])) {
+                return response()->json(['Error' => 'Invalid image format. Only PNG, JPG, and JPEG formats are allowed.'], 415);
+            }
+
+            // Store image and save path
+            $path = $request->file('image_url')->store('public/images/books');
+
+            $model->image_url = $path;
+        }
         
         try {
             $model->save();

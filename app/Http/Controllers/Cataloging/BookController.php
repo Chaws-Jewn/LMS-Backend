@@ -19,13 +19,13 @@ class BookController extends Controller
     public function add(Request $request) {
         $accessions = [];
         $request->validate([
-            'accession' => 'nullable|string|max:20',
-            'title' => 'required|string|max:255',
-            'authors' => 'required|string|max:255',
-            'publisher' => 'required|string|max:255',
+            'accession' => 'required|string|max:20',
+            'title' => 'nullable|string|max:255',
+            'authors' => 'nullable|string|max:255',
+            'publisher' => 'nullable|string|max:255',
             'remarks' => 'nullable|string|max:512',
             'pages' => 'required|integer|min:1',
-            'copyright' => 'required|integer|min:1901|max:'.date('Y'),
+            'copyright' => 'nullable|string',
             'volume' => 'nullable|string',
             'edition' => 'nullable|string',
             'acquired_date' => 'required|date',
@@ -87,15 +87,15 @@ class BookController extends Controller
                 $model->authors = json_encode($authors);
                 $model->status = 0;
                 
-                try {
+                // try {
                     $model->save();
-                } catch (\Illuminate\Database\QueryException $e) {
-                    if ($e->getCode() == 23000) {
-                        return response()->json(['message' => 'Duplicate accession entry detected.'], 409); // HTTP status code 409 for conflict
-                    } else {
-                        return response()->json(['message' => 'Cannot process request.'], 400); // HTTP status code 500 for internal server error
-                    }
-                }
+                // } catch (\Illuminate\Database\QueryException $e) {
+                //     if ($e->getCode() == 23000) {
+                //         return response()->json(['message' => 'Duplicate accession entry detected.'], 409); // HTTP status code 409 for conflict
+                //     } else {
+                //         return response()->json(['message' => 'Cannot process request.'], 400); // HTTP status code 500 for internal server error
+                //     }
+                // }
             }
         }
 
@@ -121,13 +121,13 @@ class BookController extends Controller
     public function update(Request $request, $id) {
         
         $request->validate([
-            'accession' => 'nullable|string|max:20',
-            'title' => 'required|string|max:255',
-            'authors' => 'required|string|max:255',
-            'publisher' => 'required|string|max:255',
+            'accession' => 'required|string|max:20',
+            'title' => 'nullable|string|max:255',
+            'authors' => 'nullable|string|max:255',
+            'publisher' => 'nullable|string|max:255',
             'remarks' => 'nullable|string|max:512',
             'pages' => 'required|integer|min:1',
-            'copyright' => 'required|integer|min:1901|max:'.date('Y'),
+            'copyright' => 'nullable|string',
             'volume' => 'nullable|string',
             'edition' => 'nullable|string',
             'acquired_date' => 'required|date',

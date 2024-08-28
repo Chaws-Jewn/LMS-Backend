@@ -8,13 +8,14 @@ use App\Http\Controllers\ImageController;
 use Exception;
 use Illuminate\Http\Request;
 use App\Models\Location;
-use Storage, Str, DB;
+use Str, DB;
+use Illuminate\Support\Facades\Storage;
 
 class MaterialViewController extends Controller
 {
     // const URL = 'http://26.68.32.39:8000';
-    // const URL = 'http://127.0.0.1:8000';
-    const URL = 'http://192.168.18.185:8000';
+    const URL = 'http://127.0.0.1:8000';
+    // const URL = 'http://192.168.18.185:8000';
 
     public function getMaterials(String $type) {    
     

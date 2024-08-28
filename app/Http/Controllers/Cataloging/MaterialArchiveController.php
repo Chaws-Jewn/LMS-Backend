@@ -118,9 +118,9 @@ class MaterialArchiveController extends Controller
 
     public function storeProject(Request $request, $id) {
         
-        $model = Project::findOrFail($id);
 
-        $transact = DB::transaction(function () use ($model, $id) {
+        $transact = DB::transaction(function () use ($id) {
+            $model = Project::findOrFail($id);
             try {
                 DB::connection('archives')->table('academic_projects')->insert([
                     'accession' => $model->accession,
@@ -217,7 +217,6 @@ class MaterialArchiveController extends Controller
                     'source_of_fund' => $model->source_of_fund,
                     'price' => $model->price,
                     'status' => $model->status,
-                    'inventory_status' => $model->inventory_status,
                     'periodical_type' => $model->periodical_type,
                     'language' => $model->language,
                     'issue' => $model->issue,
@@ -289,10 +288,9 @@ class MaterialArchiveController extends Controller
                     return 'Cannot process request.'; // HTTP status code 500 for internal server error
                 }
             }
-
-            return 'success';
             
             $delete->delete();
+            return 'success';
         });
 
         if($transact != 'success') return response()->json(['message' => $transact], 409);
