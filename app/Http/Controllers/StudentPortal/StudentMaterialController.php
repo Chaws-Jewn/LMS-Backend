@@ -205,7 +205,7 @@ class StudentMaterialController extends Controller
     public function viewBook($accession) {
         $book = Material::where('material_type', 0)
             ->where('accession', $accession)
-            ->firstOrFail(['accession', 'title', 'authors', 'image_url', 'call_number', 'acquired_date', 'date_published', 'remarks', 'copyright', 'price', 'status', 'inventory_status', 'volume', 'pages', 'edition']);
+            ->firstOrFail(['accession', 'title', 'authors', 'image_url', 'call_number', 'acquired_date', 'date_published', 'remarks', 'copyright', 'price', 'status',  'volume', 'pages', 'edition']);
 
         $this->processImageURL($book);
         $this->decodeAuthors($book);

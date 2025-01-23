@@ -13,9 +13,6 @@ use PhpParser\JsonDecoder;
 
 class ProjectController extends Controller
 {
-    // const URL = 'http://26.68.32.39:8000';
-    const URL = 'http://127.0.0.1:8000';
-
     public function getProjects() {
         $projects = Project::with('project_program')
         ->orderByDesc('updated_at')
@@ -23,7 +20,7 @@ class ProjectController extends Controller
 
         foreach($projects as $project) {
             if($project->image_url != null)
-                $project->image_url = self::URL .  Storage::url($project->image_url);
+                $project->image_url = config('app.url') .  Storage::url($project->image_url);
             
             $project->authors = json_decode($project->authors);
         }
@@ -48,7 +45,7 @@ class ProjectController extends Controller
     public function getProject($id) {
         $project =  Project::with('project_program')->find($id);
         if($project->image_url != null)
-                $project->image_url = self::URL .  Storage::url($project->image_url);
+                $project->image_url = config('app.url') .  Storage::url($project->image_url);
 
             $project->authors = json_decode($project->authors);
             $project->keywords = json_decode($project->keywords);
@@ -82,17 +79,19 @@ class ProjectController extends Controller
         }
 
         // ADD COVER
-        $ext = $request->file('image_url')->extension();
+        if($request->image_url) {
+            $ext = $request->file('image_url')->extension();
 
-        // Check file extension and raise error
-        if (!in_array($ext, ['png', 'jpg', 'jpeg'])) {
-            return response()->json(['Error' => 'Invalid image format. Only PNG, JPG, and JPEG formats are allowed.'], 415);
-        }
-
-        // Store image and save path
-        $path = $request->file('image_url')->store('public/images/projects/covers');
-
-        $model->image_url = $path;
+            // Check file extension and raise error
+            if (!in_array($ext, ['png', 'jpg', 'jpeg'])) {
+                return response()->json(['Error' => 'Invalid image format. Only PNG, JPG, and JPEG formats are allowed.'], 415);
+            }
+    
+            // Store image and save path
+            $path = $request->file('image_url')->store('public/images/projects/covers');
+    
+            $model->image_url = $path;
+        }        
 
         // ADD AUTHORS
         $authors = json_decode($request->authors, true);

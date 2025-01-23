@@ -22,14 +22,14 @@ class OPACMaterialsController extends Controller
                     ->orderBy('date_published', 'desc')
                     ->get()
                     ->unique(function ($material) {
-                        return $material->title . '-' . $material->edition . '-' . $material->volume;
+                        return strtolower($material->title . '-' . $material->edition . '-' . $material->volume);
                     })
                     ->values();
 
         foreach ($books as $book) {
             $book->authors = json_decode($book->authors);
             if ($book->image_url != null) {
-                $book->image_url = self::URL . Storage::url($book   ->image_url);
+                $book->image_url = config('app.url') . Storage::url($book->image_url);
             }
         }
 
@@ -54,7 +54,7 @@ class OPACMaterialsController extends Controller
         
         foreach($periodicals as $periodical) {
             if($periodical->image_url != null)
-                $periodical->image_url = self::URL .  Storage::url($periodical->image_url);
+                $periodical->image_url = config('app.url') .  Storage::url($periodical->image_url);
             
             $periodical->authors = json_decode($periodical->authors);
         }
@@ -93,7 +93,7 @@ class OPACMaterialsController extends Controller
 
         $material->authors = json_decode($material->authors);
         if($material->image_url != null)
-            $material->image_url = self::URL . Storage::url($material->image_url);
+            $material->image_url = config('app.url') . Storage::url($material->image_url);
 
         //return na agad kung di book
         if($material->material_type != 0) {
@@ -134,7 +134,7 @@ class OPACMaterialsController extends Controller
             $project->authors = json_decode($project->authors);
             $project->keywords = json_decode($project->keywords);
             if ($project->image_url != null) {
-                $project->image_url = self::URL .  Storage::url($project->image_url);
+                $project->image_url = config('app.url') .  Storage::url($project->image_url);
             }
         }
 
@@ -151,7 +151,7 @@ class OPACMaterialsController extends Controller
         $project->keywords = json_decode($project->keywords);
 
         if ($project->image_url != null) {
-            $project->image_url = self::URL .  Storage::url($project->image_url);
+            $project->image_url = config('app.url') .  Storage::url($project->image_url);
         }
         return $project;
     }

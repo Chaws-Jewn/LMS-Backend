@@ -151,7 +151,7 @@ class AuthController extends Controller
                     'middle_name' => $user->middle_name,
                     'domain_account' => $user->domain_email,
                     'main_address' => $user->main_address,
-                    'profile_picture' => self::URL .  Storage::url($user->profile_image)
+                    'profile_picture' => config('app.url') .  Storage::url($user->profile_image)
                 ];
 
                 $log = new ActivityLogController();

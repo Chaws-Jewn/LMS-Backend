@@ -94,7 +94,7 @@ class ViewArchivesController extends Controller
         }   
 
         if($material->authors) $material->authors = json_decode($material->authors);
-        if($material->image_url) $material->image_url = self::URL . Storage::url($material->image_url);
+        if($material->image_url) $material->image_url = config('app.url') . Storage::url($material->image_url);
         return $material;
     }
 }

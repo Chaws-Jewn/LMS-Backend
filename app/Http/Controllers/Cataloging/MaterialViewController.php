@@ -13,12 +13,7 @@ use Illuminate\Support\Facades\Storage;
 
 class MaterialViewController extends Controller
 {
-    // const URL = 'http://26.68.32.39:8000';
-    const URL = 'http://127.0.0.1:8000';
-    // const URL = 'http://192.168.18.185:8000';
-
-    public function getMaterials(String $type) {    
-    
+    public function getMaterials(String $type) {
         $materials = [];
         switch($type) {
             case 'books':
@@ -92,7 +87,7 @@ class MaterialViewController extends Controller
         $material = Material::where('accession', $id)->firstOrFail();
         if($material->authors) $material->authors = json_decode($material->authors);
         if($material->keywords) $material->keywords = json_decode($material->keywords);
-        if($material->image_url) $material->image_url = self::URL .  Storage::url($material->image_url);
+        if($material->image_url) $material->image_url = config('app.url') .  Storage::url($material->image_url);
         return $material;
     }
 }

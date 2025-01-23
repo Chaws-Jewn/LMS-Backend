@@ -12,7 +12,7 @@
         "laravel/framework": "^11.0",
         "laravel/sanctum": "*",
         "laravel/tinker": "^2.9",
-        "phpoffice/phpspreadsheet": "^2.1",
+        "phpoffice/phpspreadsheet": "^3.3",
         "radionovel/php-zip": "^1.0",
         "simplesoftwareio/simple-qrcode": "^4.2",
         "ysgao/php-zip": "0.2.0.1"

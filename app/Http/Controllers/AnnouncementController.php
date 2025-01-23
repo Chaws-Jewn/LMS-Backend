@@ -18,7 +18,7 @@ class AnnouncementController extends Controller
         $announcements = Announcement::orderby('created_at', 'desc')->get();
         foreach($announcements as $announcement) {
             if($announcement->image_url != null)
-                $announcement->image_url = self::URL . Storage::url($announcement->image_url);
+                $announcement->image_url = config('app.url') . Storage::url($announcement->image_url);
         }
 
         return $announcements;
@@ -52,7 +52,7 @@ class AnnouncementController extends Controller
         $announcement->save();
 
         if($announcement->image_url != null)
-            $announcement->image_url = self::URL . Storage::url($announcement->image_url);
+            $announcement->image_url = config('app.url') . Storage::url($announcement->image_url);
         else {
             $announcement->image_url = null;
         }
@@ -103,7 +103,7 @@ class AnnouncementController extends Controller
         }
 
         if($announcement->image_url != null)
-            $announcement->image_url = self::URL . Storage::url($announcement->image_url);
+            $announcement->image_url = config('app.url') . Storage::url($announcement->image_url);
         else {
             $announcement->image_url = null;
         }

@@ -442,7 +442,7 @@ class BorrowMaterialController extends Controller
 
         foreach($borrowMaterial as $book) {
             if($book->book->image_url != null)
-                $book->book->image_url = self::URL . Storage::url($book->book->image_url);
+                $book->book->image_url = config('app.url') . Storage::url($book->book->image_url);
 
             // $book->book->authors = json_decode($book->book->authors);
             // $book->book->authors = 'sup';

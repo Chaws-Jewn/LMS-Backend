@@ -86,7 +86,7 @@ Route::middleware(['auth:sanctum', 'ability:maintenance'])->group(function () {
     //cataloging
     Route::get('/locations', [LocationController::class, 'getLocations']);
     Route::post('/locations', [LocationController::class, 'create']);
-    Route::put('locations/{id}', [LocationController::class, 'update']);
+    Route::post('locations/{id}', [LocationController::class, 'update']);
     Route::delete('locations/{id}', [LocationController::class, 'destroy']);
 
     Route::prefix('maintenance/lockers')->group(function () {
@@ -188,7 +188,7 @@ Route::group(['middleware' => ['auth:sanctum', 'ability:cataloging']], function 
         // PROJECTS
         Route::get('projects', [ProjectController::class, 'getProjects']);
         Route::get('project/id/{id}', [ProjectController::class, 'getProject']);
-        Route::get('projects/department/{department}', [ProjectController::class, 'getByDepartment']);
+        // Route::get('projects/department/{department}', [ProjectController::class, 'getByDepartment']);
         Route::post('projects/process', [ProjectController::class, 'add']);
         Route::post('projects/process/{id}', [ProjectController::class, 'update']);
 
@@ -360,7 +360,6 @@ Route::group(['middleware' => ['auth:sanctum', 'ability:locker']], function () {
     //LOCKER MAINTENANCE
     Route::post('/locker', [LockerController::class, 'locker']);
     Route::get('/getlocker', [LockerController::class, 'getlocker']);
-    //
 
     Route::get('locker/{lockerid}', [LockerController::class, 'getLockerInfo']);
     Route::get('/locker/{id}', 'App\Http\Controllers\LockerController@getLockerInfo');

@@ -23,7 +23,7 @@ class StudentViewController extends Controller
 
     $books_array = [];
     foreach($books as $book) {
-        $image_url = $book->image_url ? self::URL . Storage::url($book->image_url) : null;
+        $image_url = $book->image_url ? config('app.url') . Storage::url($book->image_url) : null;
 
         array_push($books_array, [
             'id' => $book->accession, 
@@ -45,7 +45,7 @@ class StudentViewController extends Controller
         'volume', 'pages', 'edition', 'remarks', 'image_url']);
 
         $book->authors = json_decode($book->authors);
-        $book->image_url = self::URL . Storage::url($book->image_url);
+        $book->image_url = config('app.url') . Storage::url($book->image_url);
         return $book;
     }
 
@@ -57,7 +57,7 @@ class StudentViewController extends Controller
 
         foreach($periodicals as $periodical) {
             if($periodical->image_url != null)
-                $periodical->image_url = self::URL .  Storage::url($periodical->image_url);
+                $periodical->image_url = config('app.url') .  Storage::url($periodical->image_url);
 
             $periodical->authors = json_decode($periodical->authors);
         }
@@ -166,7 +166,7 @@ class StudentViewController extends Controller
     $announcements->transform(function ($announcement) {
         $announcement->author_name = $announcement->author->first_name . ' ' . $announcement->author->last_name;
         unset($announcement->author); // Remove the author object
-        if($announcement->image_url) $announcement->image_url = self::URL . Storage::url($announcement->image_url);
+        if($announcement->image_url) $announcement->image_url = config('app.url') . Storage::url($announcement->image_url);
         return $announcement;
     });
 
@@ -180,7 +180,7 @@ class StudentViewController extends Controller
         $announcement = Announcement::with('author')->findOrFail($id);
         $announcement->author_name = $announcement->author->first_name . ' ' . $announcement->author->last_name;
         unset($announcement->author);
-        if($announcement->image_url) $announcement->image_url = self::URL . Storage::url($announcement->image_url);
+        if($announcement->image_url) $announcement->image_url = config('app.url') . Storage::url($announcement->image_url);
         return response()->json($announcement);
     }
 
