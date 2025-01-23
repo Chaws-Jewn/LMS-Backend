@@ -379,6 +379,7 @@ Route::group(['middleware' => ['auth:sanctum', 'ability:locker']], function () {
     Route::post('/locker/{lockerId}/scan', [LockerController::class, 'scanLockerQRCode']);
     Route::post('/locker/{lockerId}/scanLocker', [LockerController::class, 'scanLocker']);
     Route::get('/locker-data', [LockerController::class, 'getLockerChartData']);
+    Route::get('/export-lockers', [LockerController::class, 'exportLockers']);
 
 
     //ADD LOCKER GALING SA MAINTENANCE DATI

@@ -1040,4 +1040,25 @@ class LockerController extends Controller
 
     return response()->json($lockerData);
 }
+
+public function exportLockers(Request $request)
+{
+    $department = $request->query('department');
+
+    // Use LockerHistory model to query the locker_history table
+    $query = LockersHistory::with(['locker', 'user.program']);  // Assuming LockerHistory has these relationships
+
+    if ($department) {
+        $query->whereHas('user.program', function ($q) use ($department) {
+            $q->where('department_short', $department);  // Filter by department if provided
+        });
+    }
+
+    $logs = $query->orderBy('time_in', 'asc')->get();  // Make sure time_in exists in your table
+
+    return response()->json([
+        'success' => true,
+        'data' => $logs
+    ]);
+}
 }
