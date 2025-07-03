@@ -13,6 +13,8 @@ class Kernel extends HttpKernel
 {
     protected $middleware = [
         // Other middleware...
+        \Illuminate\Http\Middleware\HandleCors::class,
+
     ];
 
     protected $middlewareGroups = [
@@ -21,7 +23,6 @@ class Kernel extends HttpKernel
         ],
 
         'api' => [
-            EnsureFrontendRequestsAreStateful::class,
             'throttle:api',
             SubstituteBindings::class,
         ],

@@ -1,6 +1,7 @@
 <?php
 
 namespace App\Http\Controllers;
+
 use App\Models\User;
 use App\Models\Program;
 use Illuminate\Http\Request;
@@ -15,14 +16,9 @@ use Storage;
 class AuthController extends Controller
 {
 
-    // const URL = 'http://26.68.32.39:8000';
+    const URL = 'http://26.68.32.39:8000';
     // const URL = 'http://192.168.18.185:8000';
-    const URL = 'http://192.168.243.174:8000';
-    // public function studentLogin(Request $request) {
-    //     $auth_url = 'http://127.0.0.1:8001/api/login';
-    //     $details = Http::get($auth_url)->json();
-    //     return response()->json($details, 200);
-    // }
+    // const URL = 'http://192.168.243.174:8000';
 
     public function studentLogin(Request $request)
     {
@@ -70,11 +66,13 @@ class AuthController extends Controller
         }
     }
 
-    public function user(Request $request) {
+    public function user(Request $request)
+    {
         return $request->user();
     }
 
-    public function login(Request $request, String $system) {
+    public function login(Request $request, String $system)
+    {
         $credentials = $request->only('username', 'password');
 
         if (Auth::attempt($credentials)) {
@@ -84,13 +82,13 @@ class AuthController extends Controller
             $abilities = [];
 
             // add ability if role is valids
-            if(in_array($system, $roles))
+            if (in_array($system, $roles))
                 array_push($abilities, $system);
 
             // CREATE TOKENS WITH ABILITIES
             $token = $user->createToken(Str::title($system), $abilities)->plainTextToken;
 
-            if(!in_array('student', $roles)) {
+            if (!in_array('student', $roles)) {
                 $responseData = [
                     'token' => $token,
                     'id' => $user->id,
@@ -102,45 +100,41 @@ class AuthController extends Controller
                     'main_address' => $user->main_address,
                 ];
 
-                if(in_array($system, $abilities)) {
+                if (in_array($system, $abilities)) {
 
                     $log = new ActivityLogController();
-    
+
                     $logParam = new \stdClass(); // Instantiate stdClass
-    
+
                     $user = $request->user();
-    
+
                     $logParam->system = Str::title($system);
                     $logParam->username = $user->username;
                     $logParam->fullname = $user->first_name . ' ' . $user->middle_name . ' ' . $user->last_name . ' ' . $user->ext_name;
                     $logParam->position = $user->position;
                     $logParam->desc = 'Logged in GC-LMS ' . Str::title($system);
-    
+
                     $log->savePersonnelLog($logParam);
                     return response()->json($responseData, 200);
-                }
-                
-                else { 
+                } else {
                     $log = new ActivityLogController();
-    
+
                     $logParam = new \stdClass(); // Instantiate stdClass
-    
+
                     $user = $request->user();
-    
+
                     $logParam->system = Str::title($system);
                     $logParam->username = $user->username;
                     $logParam->fullname = $user->first_name . ' ' . $user->middle_name . ' ' . $user->last_name . ' ' . $user->ext_name;
                     $logParam->position = $user->position;
                     $logParam->desc = 'Attempted to log in GC-LMS ' . Str::title($system);
-    
+
                     $log->savePersonnelLog($logParam);
                     return response()->json(['message' => 'Unauthorized'], 401);
                 };
-
-                
-            } else if(in_array('student', $roles)) {
+            } else if (in_array('student', $roles)) {
                 $student = User::with('student_program')->find($user->id);
-                
+
                 $responseData = [
                     'token' => $token,
                     'id' => $user->id,
@@ -155,7 +149,7 @@ class AuthController extends Controller
                 ];
 
                 $log = new ActivityLogController();
-    
+
                 $logParam = new \stdClass(); // Instantiate stdClass
 
                 $logParam->system = 'Student Portal';
@@ -175,12 +169,13 @@ class AuthController extends Controller
         }
     }
 
-    public function refreshToken(Request $request) {
+    public function refreshToken(Request $request)
+    {
         $user = $request->user();
 
         $user->currentAccessToken()->delete();
 
-        if(in_array($user->role, ['superadmin', 'admin']))
+        if (in_array($user->role, ['superadmin', 'admin']))
             $token = $user->createToken('token-name', ['materials:edit', 'materials:read'])->plainTextToken;
 
         // sets expiry time
@@ -191,7 +186,8 @@ class AuthController extends Controller
         return response()->json(['token' => $token]);
     }
 
-    public function logout(Request $request) {
+    public function logout(Request $request)
+    {
         try {
             $user = auth()->user();
             $system = $user->currentAccessToken()->name;
@@ -200,10 +196,10 @@ class AuthController extends Controller
             $user->currentAccessToken()->delete();
 
             $log = new ActivityLogController();
-    
+
             $logParam = new \stdClass(); // Instantiate stdClass
 
-            if(in_array('student', $abilities)) {
+            if (in_array('student', $abilities)) {
                 $student = User::with('student_program')->find($user->id);
                 $logParam->system = 'Student';
                 $logParam->program = $student->program;
@@ -220,7 +216,7 @@ class AuthController extends Controller
 
             $log->savePersonnelLog($logParam);
             return response()->json(['Status' => 'Logged out successfully'], 200);
-        } catch(Exception $e) {
+        } catch (Exception $e) {
             return response()->json(['Error' => $e->getMessage()], 400);
         }
     }

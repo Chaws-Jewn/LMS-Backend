@@ -27,20 +27,6 @@ class ProjectController extends Controller
         
         return $projects;
     }
-
-    public function getByDepartment($department) {
-        $projectsRaw = Project::with('project_program')->get(['category', 'title', 'program', 'authors', 'date_published', 'created_at']);
-
-        $projects = [];
-        foreach($projectsRaw as $project) {
-            if($project->project_program->department_short == $department) {
-                if($project->authors) $project->authors = json_decode($project->authors);
-                array_push($projects, $project);
-            }
-        }
-        
-        return $projects;
-    }
     
     public function getProject($id) {
         $project =  Project::with('project_program')->find($id);

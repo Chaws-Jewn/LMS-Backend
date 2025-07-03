@@ -12,8 +12,8 @@ use Illuminate\Http\JsonResponse;
 
 class StudentMaterialController extends Controller
 {
-    // const URL = 'http://26.68.32.39:8000';
-    const URL = 'http://192.168.243.174:8000';
+    const URL = 'http://26.68.32.39:8000';
+    // const URL = 'http://192.168.243.174:8000';
 
     // View periodicals for student portal
     public function getPeriodicals() {
