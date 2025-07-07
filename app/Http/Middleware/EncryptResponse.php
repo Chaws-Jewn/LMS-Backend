@@ -32,7 +32,7 @@ class EncryptResponse
             $content = $response->getContent();
 
             $encryptedContent = $this->encrypt($content);
-            
+
             $encryptedContent = ['lm' => $encryptedContent];
 
             $response->setContent(json_encode($encryptedContent));
@@ -41,15 +41,15 @@ class EncryptResponse
         return $response;
     }
 
-    
+
     public function encrypt($value, $serialize = true)
     {
         $key = config('app.response_key');
         $cipher = config('app.cipher');
-        $iterations = 1000;         
-        $key_length = 32;          
-        $algo = "sha256";           
-        
+        $iterations = 1000;
+        $key_length = 32;
+        $algo = "sha256";
+
         $salt = random_bytes(openssl_cipher_iv_length(strtolower($cipher)));
         $iv = random_bytes(openssl_cipher_iv_length(strtolower($cipher)));
 
@@ -58,9 +58,9 @@ class EncryptResponse
 
         $encryptedValue = \openssl_encrypt(
             $value,
-            strtolower($cipher), 
-            $derived_key, 
-            0, 
+            strtolower($cipher),
+            $derived_key,
+            0,
             $iv
         );
 

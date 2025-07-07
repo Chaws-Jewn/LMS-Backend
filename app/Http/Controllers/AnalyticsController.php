@@ -16,27 +16,29 @@ class AnalyticsController extends Controller
     public function totalLockers()
     {
         $lockers = Locker::select('status', DB::raw('count(*) as total'))
-                                ->groupBy('status')
-                                ->get();
+            ->groupBy('status')
+            ->get();
 
         return response()->json($lockers);
     }
 
-    public function lockerUsersByDepartment() {
+    public function lockerUsersByDepartment()
+    {
         $usersByDepartments = User::join('lockers_history', 'users.id', '=', 'lockers_history.user_id')
-                                    ->join('programs', 'users.program', '=', 'programs.program_short')
-                                    ->select('programs.department_short', 'lockers_history.time_in')
-                                    ->get();
+            ->join('programs', 'users.program', '=', 'programs.program_short')
+            ->select('programs.department_short', 'lockers_history.time_in')
+            ->get();
 
         return $usersByDepartments;
     }
 
-    public function getBorrowHistory() {
+    public function getBorrowHistory()
+    {
         $borrowHistory = BorrowMaterial::join('materials', 'materials.accession', 'borrow_materials.book_id')
-                                        ->join('users', 'users.id', '=', 'borrow_materials.user_id')
-                                        ->join('programs', 'users.program', '=', 'programs.program_short')
-                                        ->select('users.id', 'users.first_name', 'users.last_name', 'programs.department_short', 'materials.title', 'borrow_materials.borrow_date')
-                                        ->get();
+            ->join('users', 'users.id', '=', 'borrow_materials.user_id')
+            ->join('programs', 'users.program', '=', 'programs.program_short')
+            ->select('users.id', 'users.first_name', 'users.last_name', 'programs.department_short', 'materials.title', 'borrow_materials.borrow_date')
+            ->get();
 
         return $borrowHistory;
     }
@@ -59,10 +61,11 @@ class AnalyticsController extends Controller
 
     // }
 
-    public function getTotalMaterials() {
+    public function getTotalMaterials()
+    {
         $materials = Material::select('material_type', DB::raw('count(*) as total'))
-                            ->groupBy('material_type')
-                            ->get();
+            ->groupBy('material_type')
+            ->get();
 
         return $materials;
     }
@@ -81,12 +84,13 @@ class AnalyticsController extends Controller
     //     }
     // }
 
-    
-    public function getTotalProjects() {
+
+    public function getTotalProjects()
+    {
         $projects = Project::join('programs', 'academic_projects.program', '=', 'programs.program_short')
-                                    ->select('programs.department_short', DB::raw('count(*) as total'))
-                                    ->groupBy('programs.department_short')
-                                    ->get();                    
+            ->select('programs.department_short', DB::raw('count(*) as total'))
+            ->groupBy('programs.department_short')
+            ->get();
 
         return response()->json($projects);
     }
@@ -157,7 +161,7 @@ class AnalyticsController extends Controller
     {
         try {
             $unreturnedBooks = DB::table('materials')
-                ->where('material_type', 0) 
+                ->where('material_type', 0)
                 ->where('status', '1')
                 ->count();
 
