@@ -1,80 +1,79 @@
-DEPLOYMENT README
-=================
+# DEPLOYMENT README
 
-=== 11/07/2025 ===
-LARAVEL UPDATES
--------------
-Minor:
---- update ---
-* Removed app/Http/Kernel
-** Laravel 11 does not use this configuration, it is done on bootstrap/app.php
+---
 
---- update ---
-* Removed stateful api to remove all SPA CSRF token. -- System is all api based, no one uses web routes, CSRF verifier is for SPA Laravel Frontend
-** This removes the CSRF mismatch error and treats all calls, regardless of domain an api call, to be verified by Laravel Sanctum for APIs.
+## 11/07/2025 — Laravel Updates
 
---- update ---
-* Moved the global middleware to specific routes:: current implementation includes all routing except the '/' endpoint which is for testing.
-** This makes testing easier without the need to remove the whole middleware. 
-** Useful for new implementations, API testing, deployment testing.
-** Take note that this route group has no encryption for easier testing, after testing make sure to put back the routes to the secured group.
+### Minor Updates
 
+#### Removed `app/Http/Kernel.php`
+- Laravel 11 no longer uses this configuration.
+- Middleware setup is now done in `bootstrap/app.php`.
 
-=== 08/07/2025 ===
-LARAVEL UPDATES
---------------
-Added encryption and decryption middleware
-* Middleware to apply to all communication
-* Decryption will encrypt the ml variable, files would be sent as is
+#### Removed `statefulApi()`
+- Removed to eliminate CSRF token validation intended for SPA Laravel frontends.
+- System is API-based only; all calls are treated as stateless API requests, regardless of domain.
+- Resolves CSRF mismatch errors when using Postman or external clients.
 
-=== 03/07/2025 === 
-LARAVEL UPDATES
----------------
+#### Moved Global Middleware to Specific Routes
+- Global middleware (encryption, decryption) is now applied only to selected route groups, excluding `/` which is used for testing.
+- Benefits:
+  - Makes API testing easier without needing to disable middleware entirely.
+  - New implementations and deployment testing are simpler.
+- Note: Routes without encryption are for testing only — move them back to the secured group after testing.
 
-CORS Configuration:
+---
 
-- File location: config/cors.php
-- Fields to update:
-  - allowed_methods: currently set to allow GET, POST, PATCH, DELETE (all allowed currently for convenience)
-  - allowed_origins, allowed_headers, supports_credentials, etc.
+## 08/07/2025 — Laravel Updates
 
-Note: Laravel 11 uses native CORS support. No external packages are needed.
+### Added Encryption & Decryption Middleware
+- Middleware added for full request/response security.
+- `DecryptPayload`: Decrypts incoming encrypted payloads (usually the `ml` variable).
+- `EncryptResponse`: Encrypts outgoing responses.
+- Files are not encrypted — only payload variables.
 
-DATABASE UPDATES
-----------------
+---
 
-- Database tables retain test data for development and QA.
-- The database structure remains unchanged.
+## 03/07/2025 — Laravel Updates
 
-ACCOUNT MANAGEMENT
-------------------
+### CORS Configuration
+- File location: `config/cors.php`
+- Important fields:
+  - `allowed_methods`: Currently allows GET, POST, PATCH, DELETE.
+  - `allowed_origins`, `allowed_headers`, `supports_credentials`: All properly configured for convenience.
+- Note: Laravel 11 supports native CORS — no external packages needed.
 
-- Account creation, deletion, and updates are to be disregarded.
-- Authentication and user access will be handled differently in deployment, following Sir Melner's instructions.
+---
 
-NOTES FOR MAINTENANCE/DEPLOYMENT
-------------------
+## Database Updates
 
-Authentication used: Laravel Sanctum
+- Test data is retained for development and QA.
+- No structural changes in the database at this time.
 
-Logging used: Laravel Built in Log
-File path: storage/logs/
+---
 
-Controller File Convention:
-Main Controllers are found in each respective folders;
-Shared Controllers are in main Controllers/ directory
+## Account Management
 
-File Saving:
-Uses Laravel Storage
-Changing of domain/host provider may alter the way it works,
-one thing to make it work is to reboot the link;
+- Account creation, deletion, and updates are disabled.
+- Authentication and user access are handled based on Sir Melner’s deployment plan.
 
-How to reboot link:
-1. Delete folder public/storage
-2. Use artisan command "php artisan storage:link",
-This would create a new folder and link from the storage/public to public/storage
+---
 
-Student login function on top of AuthController:
-Is tested to fetch and function with an external api as per advisers' instructions
+## Notes for Maintenance / Deployment
 
+- Authentication Used: Laravel Sanctum
+- Logging: Laravel built-in logging system  
+  - Logs path: `storage/logs/`
 
+### Controller Convention
+- Feature-specific controllers are inside feature folders.
+- Shared/global controllers are in `app/Http/Controllers`.
+
+### File Saving
+- File storage uses Laravel Storage (`storage/app/public`).
+- Changing the host/domain may break the public storage link.
+
+#### How to fix storage link:
+```bash
+rm -rf public/storage
+php artisan storage:link
