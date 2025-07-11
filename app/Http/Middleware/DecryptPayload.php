@@ -5,6 +5,7 @@ namespace App\Http\Middleware;
 use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Illuminate\Support\Facades\Log;
 
 class DecryptPayload
 {
@@ -21,6 +22,7 @@ class DecryptPayload
             try {
                 $data = $this->decryptPayload($encrypted);
                 $request->merge($data);
+                Log::info('Decrypted payload', ['data' => $request->all()]);
             } catch (\Exception $e) {
                 return response()->json(['error' => 'Invalid encrypted payload'], 400);
             }
@@ -30,32 +32,32 @@ class DecryptPayload
     }
 
     private function decryptPayload($base64Payload)
-     {
-          $decoded = base64_decode($base64Payload);
+    {
+        $decoded = base64_decode($base64Payload);
 
-          $prefixHexLen = 12;
-          $ivHexLen = 32;
-          $keyHexLen = 64;
+        $prefixHexLen = 12;
+        $ivHexLen = 32;
+        $keyHexLen = 64;
 
-          $hexPayload = $decoded;
+        $hexPayload = $decoded;
 
-          $prefix = substr($hexPayload, 0, $prefixHexLen);
-          $ivHex = substr($hexPayload, $prefixHexLen, $ivHexLen);
-          $keyHex = substr($hexPayload, $prefixHexLen + $ivHexLen, $keyHexLen);
-          $cipherHex = substr($hexPayload, $prefixHexLen + $ivHexLen + $keyHexLen);
+        $prefix = substr($hexPayload, 0, $prefixHexLen);
+        $ivHex = substr($hexPayload, $prefixHexLen, $ivHexLen);
+        $keyHex = substr($hexPayload, $prefixHexLen + $ivHexLen, $keyHexLen);
+        $cipherHex = substr($hexPayload, $prefixHexLen + $ivHexLen + $keyHexLen);
 
-          $iv = hex2bin($ivHex);
-          $key = hex2bin($keyHex);
-          $cipherText = hex2bin($cipherHex);
+        $iv = hex2bin($ivHex);
+        $key = hex2bin($keyHex);
+        $cipherText = hex2bin($cipherHex);
 
-          $decrypted = openssl_decrypt(
-               $cipherText,
-               'AES-256-CBC',
-               $key,
-               OPENSSL_RAW_DATA,
-               $iv
-          );
+        $decrypted = openssl_decrypt(
+            $cipherText,
+            'AES-256-CBC',
+            $key,
+            OPENSSL_RAW_DATA,
+            $iv
+        );
 
-          return  json_decode($decrypted, true);;
-     }
+        return  json_decode($decrypted, true);;
+    }
 }
