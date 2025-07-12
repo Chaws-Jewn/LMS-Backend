@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -20,8 +21,9 @@ class User extends Authenticatable
     protected $fillable = [
         'id',
         'username',
-        'role',
         'password',
+        'position',
+        'role',
         'first_name',
         'middle_name',
         'last_name',
@@ -72,24 +74,28 @@ class User extends Authenticatable
         return $this->role === $role;
     }
 
-    public function logs() {
-        return $this->hasMany(CatalogingLog::class);
-    }
+    // public function logs()
+    // {
+    //     return $this->hasMany(CatalogingLog::class);
+    // }
 
-    public function student_program() {
+    public function student_program()
+    {
         return $this->belongsTo(Program::class, 'program', 'program_short');
     }
 
-    public function patron(){
+    public function patron()
+    {
         return $this->belongsTo(Patron::class);
     }
-    
+
     public function getRolesAttribute($value)
     {
         return json_decode($value, true);
     }
 
-    public function program() {
+    public function program()
+    {
         return $this->belongsTo(Program::class, 'program', 'program_short');
     }
 }

@@ -22,7 +22,6 @@ class DecryptPayload
             try {
                 $data = $this->decryptPayload($encrypted);
                 $request->merge($data);
-                Log::info('Decrypted payload', ['data' => $request->all()]);
             } catch (\Exception $e) {
                 return response()->json(['error' => 'Invalid encrypted payload'], 400);
             }

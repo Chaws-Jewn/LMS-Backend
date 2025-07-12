@@ -14,10 +14,10 @@ class UserController extends Controller
         $all_users = User::all();
         $users = [];
 
-        foreach($all_users as $user) {
+        foreach ($all_users as $user) {
             $roles = json_decode($user->role);
             $user->role = $roles;
-            if(!in_array('user', $roles) && !in_array('maintenance', $roles)) {
+            if (!in_array('user', $roles) && !in_array('maintenance', $roles)) {
                 array_push($users, $user);
             }
         }
@@ -32,9 +32,15 @@ class UserController extends Controller
         return $user;
     }
 
+    /**
+     * user store function
+     *
+     * allows initial creation of password
+     * returns the newly created user
+     */
     public function store(Request $request)
     {
-        $validator = Validator::make( $request->all(), [
+        $validator = Validator::make($request->all(), [
             'username' => 'required|unique:users',
             // 'patron_id' => 'required',
             // 'department' => 'required',
@@ -47,13 +53,14 @@ class UserController extends Controller
             'role' => 'required|string'
         ]);
 
-        if($validator->fails()) {
+        if ($validator->fails()) {
             return response()->json(['errors' => $validator->errors()], 422);
         }
 
         $user = User::create([
             'username' => $request->username,
             'role' => $request->role,
+            'position' => $request->position ?? 'Staff',
             'password' => Hash::make($request->password),
             'first_name' => $request->first_name,
             'middle_name' => $request->middle_name,
@@ -74,15 +81,22 @@ class UserController extends Controller
         $log->savePersonnelLog($logParam);
 
         $user->role = json_decode($user->role);
-        return response()->json(['success'=> $user], 201);
+        return response()->json(['success' => $user], 201);
     }
 
+    /**
+     * update user
+     *
+     * SHALL not be able to change password, fit to front end
+     * also returns the new user data
+     */
     public function update(Request $request, $id)
     {
         $user = User::findOrFail($id);
 
         $validator = Validator::make($request->all(), [
-            'password' => 'nullable',
+            'username' => 'required',
+            'position' => 'required',
             'first_name' => 'required',
             'middle_name' => 'nullable',
             'last_name' => 'required',
@@ -90,13 +104,14 @@ class UserController extends Controller
             'role' => 'required'
         ]);
 
-        if($validator->fails()) {
+        if ($validator->fails()) {
             return response()->json(['errors' => $validator->errors()], 422);
         }
 
         $user->update([
+            'username' => $request->username,
+            'position' => $request->position,
             'role' => $request->role,
-            'password' => Hash::make($request->password),
             'first_name' => $request->first_name,
             'middle_name' => $request->middle_name,
             'last_name' => $request->last_name,
@@ -120,19 +135,22 @@ class UserController extends Controller
         $user->role = json_decode($user->role);
 
         return response()->json([
-            'success'=> 'User updated successfully',
-            'data'=> $user
+            'success' => 'User updated successfully',
+            'data' => $user
         ], 200);
     }
 
     public function destroy($id)
     {
-        // Find the user by ID, including soft-deleted ones
-        $user = User::withTrashed()->findOrFail($id);
+        /* SHALL not be able to find trashed users 
+            users that are already archived wont show up in the front
+            invalid requests will most likely be from exploits
+        */
+        $user = User::findOrFail($id);
 
         // Log the deletion activity
         $log = new ActivityLogController();
-        $logParam = new \stdClass(); // Instantiate stdClass
+        $logParam = new \stdClass();
 
         $currentUser = request()->user();
         $logParam->system = 'Maintenance';
@@ -143,15 +161,13 @@ class UserController extends Controller
 
         $log->savePersonnelLog($logParam);
 
-        // Soft delete the user (if not already deleted)
-        if (!$user->trashed()) {
+        try {
             $user->delete();
             $message = 'User deleted successfully';
-        } else {
-            $message = 'User was already deleted';
+        } catch (\Exception $e) {
+            $message = $e->getMessage();
         }
 
-        // Return a JSON response indicating success
         return response()->json([
             'message' => $message,
         ]);
