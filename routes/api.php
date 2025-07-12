@@ -82,7 +82,7 @@ Route::middleware(['encrypt.response', 'decrypt.payload'])->group(function () {
         Route::post('/personnels', [UserController::class, 'store']);
         Route::get('/personnels/{personnel}', [UserController::class, 'show']);
         Route::post('/personnels/{personnel}', [UserController::class, 'update']);
-        Route::delete('/personnels/{personnel}', [UserController::class, 'destroy']);
+        Route::get('/personnels/{personnel}/delete', [UserController::class, 'destroy']);
 
         //Inventory routes
         Route::prefix('/inventory')->group(function () {
