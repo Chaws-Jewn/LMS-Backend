@@ -9,19 +9,21 @@ use Illuminate\Support\Facades\Validator;
 
 class LocationController extends Controller
 {
-    public function getLocations() {
+    public function getLocations()
+    {
         $locations = Location::orderBy('created_at', 'desc')->get();
 
         return $locations;
     }
 
-    public function create(Request $request) {
+    public function create(Request $request)
+    {
         $location = Validator::make($request->all(), [
             'location_short' => 'required|string|max:10|unique:locations',
             'location_full' => 'required|string|max:32'
         ]);
 
-        if($location->fails()) {
+        if ($location->fails()) {
             return response()->json(['error' => $location->errors()], 422);
         }
 
@@ -67,11 +69,11 @@ class LocationController extends Controller
     }
 
 
-    public function destroy($location_short)
+    public function destroy(Request $request)
     {
-        $location = Location::findOrFail($location_short);
+        $location = Location::findOrFail($request->location_short);
         // Check for related records (e.g., books that reference the location)
-        $relatedRecordsCount = Material::where('location', $location_short)->count();
+        $relatedRecordsCount = Material::where('location', $request->location_short)->count();
 
         if ($relatedRecordsCount > 0) {
             return response()->json(['error' => 'Cannot delete location. There are related records associated with it.'], 422);

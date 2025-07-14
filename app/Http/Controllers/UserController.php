@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 
 class UserController extends Controller
@@ -140,13 +141,9 @@ class UserController extends Controller
         ], 200);
     }
 
-    public function destroy($id)
+    public function destroy(Request $request)
     {
-        /* SHALL not be able to find trashed users 
-            users that are already archived wont show up in the front
-            invalid requests will most likely be from exploits
-        */
-        $user = User::findOrFail($id);
+        $user = User::findOrFail($request->id);
 
         // Log the deletion activity
         $log = new ActivityLogController();
