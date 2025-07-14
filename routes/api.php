@@ -66,11 +66,12 @@ Route::middleware(['encrypt.response', 'decrypt.payload'])->group(function () {
 
     // FOR ALL AUTHENTICATED USERS
     // get the current logged in user details
-    Route::get('/user', [AuthController::class, 'user'])->middleware('auth:sanctum');
 
     // Auth Routes
     Route::group(['middleware' => ['auth:sanctum']], function () {
-        Route::post('/refresh', [AuthController::class, 'refreshToken']);
+        Route::get('/user', [AuthController::class, 'user']);
+        Route::post('/change-password', [AuthController::class, 'changePassword']);
+        Route::post('/refresh', [AuthController::class, 'refreshToken']); /* is not used as other groups find it too much */
         Route::post('/logout', [AuthController::class, 'logout']);
     });
 
@@ -178,15 +179,15 @@ Route::middleware(['encrypt.response', 'decrypt.payload'])->group(function () {
             });
 
             // ARCHIVE Materials
-            Route::delete('materials/archive/{id}', [MaterialArchiveController::class, 'storeMaterial']);
-            Route::delete('projects/archive/{id}', [MaterialArchiveController::class, 'storeProject']);
+            Route::post('materials/archive/{id}', [MaterialArchiveController::class, 'storeMaterial']);
+            Route::post('projects/archive/{id}', [MaterialArchiveController::class, 'storeProject']);
 
             // RESTORE Materials
             Route::post('materials/restore/{id}', [MaterialArchiveController::class, 'restoreMaterial']);
             Route::post('projects/restore/{id}', [MaterialArchiveController::class, 'restoreProject']);
 
             //PERMANENTLY DELETE
-            Route::delete('permanently-delete/{type}/{id}', [MaterialArchiveController::class, 'deleteMaterial']);
+            Route::post('permanently-delete/{type}/{id}', [MaterialArchiveController::class, 'deleteMaterial']);
 
             // MATERIAL VIEWING
             Route::get('books/locations', [LocationController::class, 'getLocations']);
@@ -263,8 +264,8 @@ Route::middleware(['encrypt.response', 'decrypt.payload'])->group(function () {
         Route::get('/circulation/mostborrowed', [CirculationReport::class, 'mostborrowed']);
 
         //delete
-        Route::delete('/circulation/delete-borrowlist/{id}', [BorrowMaterialController::class, 'destroy']);
-        Route::delete('/circulation/delete-reservelist/{id}', [ReserveBookController::class, 'destroy']);
+        Route::post('/circulation/delete-borrowlist/{id}', [BorrowMaterialController::class, 'destroy']);
+        Route::post('/circulation/delete-reservelist/{id}', [ReserveBookController::class, 'destroy']);
 
         Route::get('/circulation/borrowdetail', [CirculationUserController::class, 'borrowdetail']);
     });
