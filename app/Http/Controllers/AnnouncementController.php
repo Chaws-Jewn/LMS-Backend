@@ -124,8 +124,9 @@ class AnnouncementController extends Controller
         return response()->json(['success' => $announcement], 201);
     }
 
-    public function destroy(Request $request, Announcement $announcement)
+    public function destroy(Request $request,)
     {
+        $announcement = Announcement::findOrFail($request->id);
         // Check if the announcement is already soft-deleted
         if ($announcement->trashed()) {
             return response()->json(['message' => 'Announcement was already deleted'], 400);

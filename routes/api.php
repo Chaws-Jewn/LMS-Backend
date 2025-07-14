@@ -81,9 +81,9 @@ Route::middleware(['encrypt.response', 'decrypt.payload'])->group(function () {
     Route::middleware(['auth:sanctum', 'ability:maintenance'])->group(function () {
         Route::get('/personnels', [UserController::class, 'index']);
         Route::post('/personnels', [UserController::class, 'store']);
+        Route::post('/personnels/delete', [UserController::class, 'destroy']);
         Route::get('/personnels/{personnel}', [UserController::class, 'show']);
         Route::post('/personnels/{personnel}', [UserController::class, 'update']);
-        Route::get('/personnels/{personnel}/delete', [UserController::class, 'destroy']);
 
         //Inventory routes
         Route::prefix('/inventory')->group(function () {
@@ -93,10 +93,6 @@ Route::middleware(['encrypt.response', 'decrypt.payload'])->group(function () {
                 Route::get('/search/{filter}', [InventoryController::class, 'searchBookInventory']);
                 Route::post('/{id}', [InventoryController::class, 'updateBookStatus']);
             });
-            // Route::get('/', [InventoryController::class, 'index']);
-            // Route::post('/enter', [InventoryController::class, 'enterBarcode']);
-            // Route::post('/scan', [InventoryController::class, 'scanBarcode']);
-            // Route::post('/clear', [InventoryController::class, 'clearHistory']);
         });
 
         //circulation
@@ -107,24 +103,24 @@ Route::middleware(['encrypt.response', 'decrypt.payload'])->group(function () {
         //announcements
         Route::get('/announcements', [AnnouncementController::class, 'index']);
         Route::post('/announcements', [AnnouncementController::class, 'store']);
+        Route::post('/announcements/delete', [AnnouncementController::class, 'destroy']);
         Route::get('/announcements/{announcement}', [AnnouncementController::class, 'show']);
         Route::post('/announcements/{announcement}', [AnnouncementController::class, 'update']);
-        Route::delete('/announcements/{announcement}', [AnnouncementController::class, 'destroy']);
 
         //cataloging
         Route::get('/locations', [LocationController::class, 'getLocations']);
         Route::post('/locations', [LocationController::class, 'create']);
+        Route::post('locations/delete', [LocationController::class, 'destroy']);
         Route::post('locations/{id}', [LocationController::class, 'update']);
-        Route::delete('locations/{id}', [LocationController::class, 'destroy']);
 
         Route::prefix('maintenance/lockers')->group(function () {
             Route::get('/', [LockerController::class, 'index']);
             Route::post('/', [LockerController::class, 'store']);
             Route::get('/latest', [LockerController::class, 'getStartingLockerNumber']);
             Route::get('/logs', [LockerHistoryController::class, 'getLogs']);
+            Route::post('/delete', [LockerController::class, 'destroy']); 
             Route::get('/{locker}', [LockerController::class, 'show']);
             Route::post('/{locker}', [LockerController::class, 'update']);
-            Route::post('/delete/{locker}', [LockerController::class, 'destroy']);   //get muna ayaw gumana ng delete na method. method not allowed daw
         });
 
         // DEPARTMENT

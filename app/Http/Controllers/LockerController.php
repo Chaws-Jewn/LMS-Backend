@@ -142,6 +142,22 @@ class LockerController extends Controller
             $locker = Locker::findOrFail($id);
             $validatedData = $validator->validated();
 
+            // Prevent changing status from Occupied to Unavailable if not timed out
+            if ($locker->status === 'Occupied' && $validatedData['status'] === 'Unavailable') {
+                // Check if there's an active time-in record without time-out
+                $hasActiveSession = DB::table('locker_history')
+                    ->where('locker_id', $id)
+                    ->whereNotNull('time_in')
+                    ->whereNull('time_out')
+                    ->exists();
+
+                if ($hasActiveSession) {
+                    return response()->json([
+                        'error' => 'Cannot change status to Unavailable. Student has not timed out yet.'
+                    ], 422);
+                }
+            }
+
             // Handle remarks based on status
             if ($validatedData['status'] === 'Available' || $validatedData['status'] === 'Damaged') {
                 $validatedData['remarks'] = null;
@@ -161,9 +177,9 @@ class LockerController extends Controller
         }
     }
 
-    public function destroy(Request $request, $id)
+    public function destroy(Request $request)
     {
-        $locker = Locker::withTrashed()->findOrFail($id);
+        $locker = Locker::withTrashed()->findOrFail($request->id);
 
         // Check if the locker is already soft-deleted
         if ($locker->trashed()) {
@@ -171,7 +187,7 @@ class LockerController extends Controller
         }
 
         // Soft delete related records from lockers_history if needed
-        LockersHistory::where('locker_id', $id)->delete();
+        LockersHistory::where('locker_id', $request->id)->delete();
 
         // Set locker number in case it gets deleted
         $lockerNumber = $locker->locker_number;
