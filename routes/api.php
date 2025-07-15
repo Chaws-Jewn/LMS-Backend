@@ -324,6 +324,8 @@ Route::middleware(['encrypt.response', 'decrypt.payload'])->group(function () {
             Route::get('borrowed/user/{user_id}', [StudentReservationController::class, 'getBorrowedByUserId']);
             Route::get('borrow/user/{user_id}', [StudentReservationController::class, 'getBorrowByUserId']);
             Route::get('borrowed/{id}', [StudentReservationController::class, 'getBorrowedById']);
+
+            Route::get('/patrons/{id}', [PatronController::class, 'getPatronById']);
         });
     });
 

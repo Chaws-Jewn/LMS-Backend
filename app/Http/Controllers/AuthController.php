@@ -224,8 +224,6 @@ class AuthController extends Controller
         return response()->json(['user' => $user], 200);
     }
 
-
-
     public function changePassword(Request $request)
     {
         $validator = Validator::make($request->all(), [
