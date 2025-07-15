@@ -118,7 +118,7 @@ Route::middleware(['encrypt.response', 'decrypt.payload'])->group(function () {
             Route::post('/', [LockerController::class, 'store']);
             Route::get('/latest', [LockerController::class, 'getStartingLockerNumber']);
             Route::get('/logs', [LockerHistoryController::class, 'getLogs']);
-            Route::post('/delete', [LockerController::class, 'destroy']); 
+            Route::post('/delete', [LockerController::class, 'destroy']);
             Route::get('/{locker}', [LockerController::class, 'show']);
             Route::post('/{locker}', [LockerController::class, 'update']);
         });
@@ -305,7 +305,7 @@ Route::middleware(['encrypt.response', 'decrypt.payload'])->group(function () {
             Route::post('newreservations', [StudentReservationController::class, 'reservebook']);
             Route::get('reservations/{user_id}', [StudentReservationController::class, 'getReservationsByUserId']);
             Route::get('reservations/user/{id}', [StudentReservationController::class, 'viewReservationById']);
-            Route::patch('reservations/cancel/{id}', [StudentReservationController::class, 'cancelReservation']);
+            Route::post('reservations/cancel/{id}', [StudentReservationController::class, 'cancelReservation']);
 
 
 

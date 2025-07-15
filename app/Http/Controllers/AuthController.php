@@ -11,6 +11,7 @@ use Exception;
 use Auth;
 use DB, Http, Str;
 use PhpParser\JsonDecoder;
+use Illuminate\Support\Facades\Validator;
 use Storage;
 
 class AuthController extends Controller
@@ -194,22 +195,23 @@ class AuthController extends Controller
 
             $logParam = new \stdClass(); // Instantiate stdClass
 
+            $logParam->username = $user->username;
+            $logParam->fullname = $user->first_name . ' ' . $user->middle_name . ' ' . $user->last_name . ' ' . $user->ext_name;
             if (in_array('student', $abilities)) {
                 $student = User::with('student_program')->find($user->id);
                 $logParam->system = 'Student';
                 $logParam->program = $student->program;
                 $logParam->department = $student->student_program->department_short;
                 $logParam->desc = 'Logged Out of GC-LMS Student Portal';
+                $log->saveStudentLog($logParam);
             } else {
                 $logParam->system = $system;
                 $logParam->position = $user->position;
                 $logParam->desc = 'Logged Out of GC-LMS ' . Str::title($system);
+                $log->savePersonnelLog($logParam);
             }
 
-            $logParam->username = $user->username;
-            $logParam->fullname = $user->first_name . ' ' . $user->middle_name . ' ' . $user->last_name . ' ' . $user->ext_name;
 
-            $log->savePersonnelLog($logParam);
             return response()->json(['Status' => 'Logged out successfully'], 200);
         } catch (Exception $e) {
             return response()->json(['Error' => $e->getMessage()], 400);
@@ -220,5 +222,43 @@ class AuthController extends Controller
     {
         $user = User::findOrFail($id);
         return response()->json(['user' => $user], 200);
+    }
+
+
+
+    public function changePassword(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'old_password' => 'required',
+            'new_password' => 'required|min:8|confirmed',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['message' => 'Invalid content'], 422);
+        }
+
+        $user = $request->user();
+        if (!Hash::check($request->old_password, $user->password)) {
+            return response()->json(['messsage' => 'Old password is incorrect'], 422);
+        } else if (Hash::check($request->new_password, $user->password)) {
+            return response()->json(['message' => 'New password cannot be the same as the old password'], 422);
+        } else {
+            $user->password = Hash::make($request->new_password);
+            $user->save();
+
+            // Log the password change activity
+            $log = new ActivityLogController();
+            $logParam = new \stdClass();
+
+            $logParam->system = 'Maintenance';
+            $logParam->username = $user->username;
+            $logParam->fullname = $user->first_name . ' ' . $user->middle_name . ' ' . $user->last_name . ' ' . $user->ext_name;
+            $logParam->position = $user->position;
+            $logParam->desc = 'Changed password for user with username ' . $user->username;
+
+            $log->savePersonnelLog($logParam);
+
+            return response()->json(['message' => 'Password changed successfully'], 200);
+        }
     }
 }

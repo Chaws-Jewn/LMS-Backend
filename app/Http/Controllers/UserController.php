@@ -169,40 +169,4 @@ class UserController extends Controller
             'message' => $message,
         ]);
     }
-
-    public function changePassword(Request $request)
-    {
-        $validator = Validator::make($request->all(), [
-            'old_password' => 'required',
-            'new_password' => 'required|min:8|confirmed',
-        ]);
-
-        if ($validator->fails()) {
-            return response()->json(['errors' => $validator->errors()], 422);
-        }
-
-        $user = $request->user();
-        if (!Hash::check($request->old_password, $user->password)) {
-            return response()->json(['error' => 'Old password is incorrect'], 422);
-        } else if (Hash::check($request->new_password, $user->password)) {
-            return response()->json(['error' => 'New password cannot be the same as the old password'], 422);
-        } else {
-            $user->password = Hash::make($request->new_password);
-            $user->save();
-
-            // Log the password change activity
-            $log = new ActivityLogController();
-            $logParam = new \stdClass();
-
-            $logParam->system = 'Maintenance';
-            $logParam->username = $user->username;
-            $logParam->fullname = $user->first_name . ' ' . $user->middle_name . ' ' . $user->last_name . ' ' . $user->ext_name;
-            $logParam->position = $user->position;
-            $logParam->desc = 'Changed password for user with username ' . $user->username;
-
-            $log->savePersonnelLog($logParam);
-
-            return response()->json(['success' => 'Password changed successfully'], 200);
-        }
-    }
 }
