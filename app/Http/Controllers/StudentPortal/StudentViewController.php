@@ -11,38 +11,46 @@ use Illuminate\Support\Facades\Storage;
 
 class StudentViewController extends Controller
 {
-    // const URL = 'http://192.168.18.185:8000';
-    // const URL = 'http://127.0.0.1:8000';
-    const URL = 'http://192.168.243.174:8000';
-
     // BOOKS
-    public function viewBooks() {+
-        
+    public function viewBooks()
+    {
+        +$books = Material::all(); // Fetching all books
 
-          $books = Material::all(); // Fetching all books
+        $books_array = [];
+        foreach ($books as $book) {
+            $image_url = $book->image_url ? config('app.url') . Storage::url($book->image_url) : null;
 
-    $books_array = [];
-    foreach($books as $book) {
-        $image_url = $book->image_url ? config('app.url') . Storage::url($book->image_url) : null;
-
-        array_push($books_array, [
-            'id' => $book->accession, 
-            'image_url' => $image_url,
-            ' location' => $book->location,
-            'authors' => json_decode($book->authors),
-            'volume' => $book->volume,
-            'edition' => $book->edition,
-            'available' => $book->status, 
-            'copyright' => $book->copyright,
-            'fine' => $book->fine ?? 0
-        ]);
+            array_push($books_array, [
+                'id' => $book->accession,
+                'image_url' => $image_url,
+                ' location' => $book->location,
+                'authors' => json_decode($book->authors),
+                'volume' => $book->volume,
+                'edition' => $book->edition,
+                'available' => $book->status,
+                'copyright' => $book->copyright,
+                'fine' => $book->fine ?? 0
+            ]);
+        }
+        return $books_array;
     }
-    return $books_array;
-}
 
-    public function viewBook(int $id) {
-        $book = Material::find($id, ['available', 'title', 'id', 'call_number', 'copyright', 'price', 'authors',
-        'volume', 'pages', 'edition', 'remarks', 'image_url']);
+    public function viewBook(int $id)
+    {
+        $book = Material::find($id, [
+            'available',
+            'title',
+            'id',
+            'call_number',
+            'copyright',
+            'price',
+            'authors',
+            'volume',
+            'pages',
+            'edition',
+            'remarks',
+            'image_url'
+        ]);
 
         $book->authors = json_decode($book->authors);
         $book->image_url = config('app.url') . Storage::url($book->image_url);
@@ -50,18 +58,18 @@ class StudentViewController extends Controller
     }
 
     // PERIODICALS
-    public function viewPeriodicals() {
-        $periodicals = Material::
-        select(['id', 'title', 'authors', 'material_type', 'image_url', 'language', 'volume', 'issue', 'copyright', 'remarks'])
-        ->orderByDesc('updated_at')->get();
+    public function viewPeriodicals()
+    {
+        $periodicals = Material::select(['id', 'title', 'authors', 'material_type', 'image_url', 'language', 'volume', 'issue', 'copyright', 'remarks'])
+            ->orderByDesc('updated_at')->get();
 
-        foreach($periodicals as $periodical) {
-            if($periodical->image_url != null)
+        foreach ($periodicals as $periodical) {
+            if ($periodical->image_url != null)
                 $periodical->image_url = config('app.url') .  Storage::url($periodical->image_url);
 
             $periodical->authors = json_decode($periodical->authors);
         }
-        
+
         return $periodicals;
     }
 
@@ -74,32 +82,54 @@ class StudentViewController extends Controller
     }
 
     // ARTICLES
-    public function viewArticles() {
-        $articles = Material::
-        select(['material_type', 'title', 'authors', 'language', 'subject', 'date_published', 
-        'publisher', 'volume', 'issue', 'abstract'])
-        ->orderByDesc('created_at')->get();
-        
-        foreach($articles as $article) {
+    public function viewArticles()
+    {
+        $articles = Material::select([
+                'material_type',
+                'title',
+                'authors',
+                'language',
+                'subject',
+                'date_published',
+                'publisher',
+                'volume',
+                'issue',
+                'abstract'
+            ])
+            ->orderByDesc('created_at')->get();
+
+        foreach ($articles as $article) {
             $article->authors = json_decode($article->authors);
         }
-        
+
         return $articles;
     }
 
-    public function viewArticle(int $id) {
-        $article = Material::find($id, ['material_type', 'title', 'authors', 'language', 'subject', 'date_published', 
-        'publisher', 'volume', 'issue', 'abstract']);
-        
+    public function viewArticle(int $id)
+    {
+        $article = Material::find($id, [
+            'material_type',
+            'title',
+            'authors',
+            'language',
+            'subject',
+            'date_published',
+            'publisher',
+            'volume',
+            'issue',
+            'abstract'
+        ]);
+
         $article->authors = json_decode($article->authors);
-        
+
         return $article;
     }
 
-    public function viewArticlesByType($type) {
+    public function viewArticlesByType($type)
+    {
         $articles = Material::where('material_type', $type)->orderByDesc('updated_at')->get();
-        
-        foreach($articles as $article) {
+
+        foreach ($articles as $article) {
             $article->authors = json_decode($article->authors);
         }
 
@@ -107,7 +137,8 @@ class StudentViewController extends Controller
     }
 
     // PROJECTS
-    public function getProjectCategoriesByDepartment($department) {
+    public function getProjectCategoriesByDepartment($department)
+    {
         // Define the mapping of department strings to department IDs
         $departmentMapping = [
             'CCS' => 1,
@@ -117,29 +148,29 @@ class StudentViewController extends Controller
             'CBA' => 5,
             // Add other mappings as necessary
         ];
-    
+
         // Check if the provided department string exists in the mapping
         if (!isset($departmentMapping[$department])) {
             return response()->json(['error' => 'Invalid department'], 400);
         }
-    
+
         // Get the department ID from the mapping
         $departmentId = $departmentMapping[$department];
-    
+
         // Retrieve projects with their related program
         $projects = Project::with('program')->get();
-    
+
         // Filter projects based on the provided department
         $filteredProjects = $projects->filter(function ($project) use ($departmentId) {
             return $project->program->department_id == $departmentId;
         });
-    
+
         // Group projects by category
         $groupedProjects = $filteredProjects->groupBy('category');
-    
+
         // Get the category names
         $categories = $groupedProjects->keys();
-    
+
         // Prepare the response array containing category names and their respective projects
         $projectCategories = [];
         foreach ($categories as $category) {
@@ -148,7 +179,7 @@ class StudentViewController extends Controller
                 'projects' => $groupedProjects[$category],
             ];
         }
-    
+
         // Return the response as JSON
         return response()->json($projectCategories);
     }
@@ -156,23 +187,23 @@ class StudentViewController extends Controller
 
     //Annoucement
     public function index()
-{
-    // Fetch announcements ordered by 'created_at' in descending order
-    $announcements = Announcement::with('author')
-        ->orderBy('created_at', 'desc')
-        ->get();
+    {
+        // Fetch announcements ordered by 'created_at' in descending order
+        $announcements = Announcement::with('author')
+            ->orderBy('created_at', 'desc')
+            ->get();
 
-    // Transform the announcements to include author name and remove author object
-    $announcements->transform(function ($announcement) {
-        $announcement->author_name = $announcement->author->first_name . ' ' . $announcement->author->last_name;
-        unset($announcement->author); // Remove the author object
-        if($announcement->image_url) $announcement->image_url = config('app.url') . Storage::url($announcement->image_url);
-        return $announcement;
-    });
+        // Transform the announcements to include author name and remove author object
+        $announcements->transform(function ($announcement) {
+            $announcement->author_name = $announcement->author->first_name . ' ' . $announcement->author->last_name;
+            unset($announcement->author); // Remove the author object
+            if ($announcement->image_url) $announcement->image_url = config('app.url') . Storage::url($announcement->image_url);
+            return $announcement;
+        });
 
-    // Return the transformed and ordered announcements as JSON
-    return response()->json($announcements);
-}
+        // Return the transformed and ordered announcements as JSON
+        return response()->json($announcements);
+    }
 
     // Display the specified announcement
     public function show($id)
@@ -180,8 +211,7 @@ class StudentViewController extends Controller
         $announcement = Announcement::with('author')->findOrFail($id);
         $announcement->author_name = $announcement->author->first_name . ' ' . $announcement->author->last_name;
         unset($announcement->author);
-        if($announcement->image_url) $announcement->image_url = config('app.url') . Storage::url($announcement->image_url);
+        if ($announcement->image_url) $announcement->image_url = config('app.url') . Storage::url($announcement->image_url);
         return response()->json($announcement);
     }
-
 }
