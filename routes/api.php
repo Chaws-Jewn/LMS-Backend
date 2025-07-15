@@ -224,10 +224,10 @@ Route::middleware(['encrypt.response', 'decrypt.payload'])->group(function () {
         Route::get('/circulation/borrow-list', [BorrowMaterialController::class, 'borrowlist']);
 
         // update borrow list
-        Route::put('/circulation/borrow-edit/{id}', [BorrowMaterialController::class, 'borrowEdit']);
+        Route::post('/circulation/borrow-edit/{id}', [BorrowMaterialController::class, 'borrowEdit']);
 
         // borrow-list returning book from borrowed list
-        Route::put('circulation/return-book/{id}', [BorrowMaterialController::class, 'returnbook']);
+        Route::post('circulation/return-book/{id}', [BorrowMaterialController::class, 'returnbook']);
 
         //returned book list
         Route::get('/circulation/returned-list', [BorrowMaterialController::class, 'returnedlist']);
@@ -240,11 +240,11 @@ Route::middleware(['encrypt.response', 'decrypt.payload'])->group(function () {
         Route::get('/circulation/reservation-list/{type}', [ReserveBookController::class, 'reservelist']);
         Route::get('/circulation/reservelist', [ReserveBookController::class, 'allreserve']);
         Route::get('/circulation/queue', [ReserveBookController::class, 'queue']);
-        Route::put('/circulation/cancel/{id}', [ReserveBookController::class, 'cancelReservation']);
+        Route::post('/circulation/cancel/{id}', [ReserveBookController::class, 'cancelReservation']);
 
         //borrow book
         Route::post('/circulation/borrow/book', [BorrowMaterialController::class, 'borrowbook']);
-        Route::put('/circulation/fromreserve/book/{id}', [BorrowMaterialController::class, 'fromreservation']);
+        Route::post('/circulation/fromreserve/book/{id}', [BorrowMaterialController::class, 'fromreservation']);
         Route::get('/circulation/getpatrons', [PatronController::class, 'index']);
         Route::get('/circulation/borrow-count/{id}', [BorrowMaterialController::class, 'borrowcount']);
 
