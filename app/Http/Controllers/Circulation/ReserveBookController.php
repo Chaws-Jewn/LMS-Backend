@@ -1,6 +1,7 @@
 <?php
 
 namespace App\Http\Controllers\Circulation;
+
 use Illuminate\Support\Facades\DB;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Log;
@@ -25,7 +26,7 @@ class ReserveBookController extends Controller
         $logMessages = [];
         $logMessages[] = 'Received payload: ' . json_encode($payload);
         Log::info('Received payload:', $payload);
-    
+
         // Check if the required fields are present
         $requiredFields = ['book_id', 'user_id', 'reserve_expiration'];
         foreach ($requiredFields as $field) {
@@ -33,57 +34,57 @@ class ReserveBookController extends Controller
                 return response()->json(['error' => 'Missing required field: ' . $field, 'logMessages' => $logMessages], 400);
             }
         }
-    
+
         try {
             // Check if the book_id exists in the materials table
             $material = Material::find($payload['book_id']);
             if (!$material) {
                 return response()->json(['error' => 'Book not found'], 404);
             }
-    
+
             // Check if the material status allows reservation
             // if ($material->status == 0) {
             //     return response()->json(['error' => 'Book is currently borrowed'], 400);
             // }
-    
+
             // if ($material->status == 3) {
             //     return response()->json(['error' => 'Book has not been returned'], 400);
             // }
-    
+
             // User and patron information
             $user = User::find($payload['user_id']);
             if (!$user) {
                 return response()->json(['error' => 'User not found'], 404);
             }
-    
+
             $patron = Patron::find($user->patron_id);
             if (!$patron) {
                 return response()->json(['error' => 'Patron not found'], 404);
             }
-    
+
             // Number of materials allowed for this patron
             $materialsAllowed = $patron->materials_allowed;
-    
+
             // Allowed number of active reservations
             $activeReservationsCount = BorrowMaterial::where('user_id', $payload['user_id'])
-                                                    ->where('status', 2) // 2 means active reservation
-                                                    ->count();
-    
+                ->where('status', 2) // 2 means active reservation
+                ->count();
+
             if ($activeReservationsCount >= $materialsAllowed) {
                 return response()->json(['error' => 'User already has the maximum number of active reservations allowed'], 400);
             }
 
             //check if user has active reservation for book
             $existingReservation = BorrowMaterial::where('user_id', $payload['user_id'])
-            ->where('book_id', $payload['book_id'])
-            ->where('status', 2) // Active reservation status
-            ->exists();
+                ->where('book_id', $payload['book_id'])
+                ->where('status', 2) // Active reservation status
+                ->exists();
 
             if ($existingReservation) {
                 DB::rollBack();
                 return response()->json(['error' => 'Multiple reservations for the same book are not allowed'], 400);
             }
-    
+
             // Use a transaction to ensure both operations happen at the same time
             DB::beginTransaction();
             try {
@@ -97,7 +98,7 @@ class ReserveBookController extends Controller
                 $reservation->reservation_type = 1; // Assuming 1 is walk-in
                 $reservation->status = 2; // Status 2 for active reservation
                 $reservation->save();
-    
+
                 // // Update the material status to indicate it's reserved
                 // $material->status = 2; // Update with appropriate status value
                 // $material->save();
@@ -113,13 +114,13 @@ class ReserveBookController extends Controller
                 $logParam->username = $currentUser->username;
                 $logParam->fullname = $currentUser->first_name . ' ' . $currentUser->middle_name . ' ' . $currentUser->last_name . ' ' . $currentUser->ext_name;
                 $logParam->position = $currentUser->position;
-                $logParam->desc = 'Reserve Instance for '. $user->first_name . ' with book = ' . $material->title;
+                $logParam->desc = 'Reserve Instance for ' . $user->first_name . ' with book = ' . $material->title;
 
                 $log->savePersonnelLog($logParam);
-    
+
                 // Commit the transaction
                 DB::commit();
-    
+
                 // Prepare and return the response data
                 $data = ['reservation' => $reservation];
                 return response()->json($data);
@@ -137,12 +138,12 @@ class ReserveBookController extends Controller
     public function allreserve(Request $request)
     {
         // Fetch all reservation data from the borrow_materials table
-        $reservelist = BorrowMaterial::with(['user', 'user.patron', 'material'])
-                        ->whereIn('reservation_type', [0, 1])
-                        ->where('status', '=', 2)
-                        ->orderBy('book_id')
-                        ->orderBy('reserve_date', 'asc')
-                        ->get();
+        $reservelist = BorrowMaterial::with(['user', 'user.patron', 'user.student_program', 'material'])
+            ->whereIn('reservation_type', [0, 1])
+            ->where('status', '=', 2)
+            ->orderBy('book_id')
+            ->orderBy('reserve_date', 'asc')
+            ->get();
 
         // Initialize an array to keep track of queue positions for each book
         $bookQueuePositions = [];
@@ -186,84 +187,85 @@ class ReserveBookController extends Controller
                 'book_id' => $reservation->book_id,
                 'title' => $reservation->material->title,
                 'reserve_date' => $reservation->reserve_date,
-                'reserve_expiration' =>$reservation->reserve_expiration,
+                'reserve_expiration' => $reservation->reserve_expiration,
                 'queue_position' => $reservation->queue_position,
                 'status_label' => $reservation->status_label,
                 'mode_of_reservation' => $reservation->reservation_type == 1 ? 'face to face' : 'online',
-                'department' => $reservation->user->program,
+                'department' => $reservation->user->student_program->department_short,
+                'program' => $reservation->user->student_program->program_short
                 // Include other fields as needed
             ];
         }));
     }
-    
-    public function queue(Request $request) 
+
+    public function queue(Request $request)
     {
         // Fetch all queue data from the reservations table
         $queueData = Reservation::orderBy('book_id')
             ->orderBy('start_date', 'asc')
             ->get(['user_id', 'book_id', 'start_date', 'status']); // Include the status field
-    
+
         // Initialize an array to keep track of queue positions for each book
         $bookQueuePositions = [];
-    
+
         // Iterate through each reservation to calculate queue positions
         foreach ($queueData as $reservation) {
             // Check if reservation status is 0 (not active)
             if ($reservation->status == 0) {
                 continue; // Skip reservations with status 0
             }
-    
+
             // Get the book ID
             $bookId = $reservation->book_id;
-    
+
             // If the book ID is not yet in the bookQueuePositions array, initialize its queue position to 1
             if (!isset($bookQueuePositions[$bookId])) {
                 $bookQueuePositions[$bookId] = 1;
             }
-    
+
             // Set the queue position for the current reservation
             $reservation->queue_position = $bookQueuePositions[$bookId];
-    
+
             // Increment the queue position for the next reservation
             $bookQueuePositions[$bookId]++;
         }
-    
+
         // Return the result as JSON (or any other format required by the front end)
         return response()->json($queueData);
     }
-    
-    public function getQueuePosition(Request $request) 
+
+    public function getQueuePosition(Request $request)
     {
         // Get the authenticated user's ID
         $userId = $request->user()->id;
-    
+
         // Fetch all active reservations for the user's books
         $userReservations = Reservation::where('user_id', $userId)
-                            ->where('status', '!=', 0) // Exclude reservations with status 0
-                            ->orderBy('start_date')
-                            ->get(['book_id', 'start_date']);
-    
+            ->where('status', '!=', 0) // Exclude reservations with status 0
+            ->orderBy('start_date')
+            ->get(['book_id', 'start_date']);
+
         // Initialize the queue positions
         $queuePositions = [];
-    
+
         // Process the user's reservations and determine the queue position for each book
         foreach ($userReservations as $userReservation) {
             $bookId = $userReservation->book_id;
-    
+
             // Count the number of reservations with earlier start dates for the same book
             $position = Reservation::where('book_id', $bookId)
-                            ->where('start_date', '<', $userReservation->start_date)
-                            ->where('status', '!=', 0) // Exclude reservations with status 0
-                            ->count() + 1; // Add 1 to start positions from 1
-    
+                ->where('start_date', '<', $userReservation->start_date)
+                ->where('status', '!=', 0) // Exclude reservations with status 0
+                ->count() + 1; // Add 1 to start positions from 1
+
             // Assign the queue position for the book
             $queuePositions[$bookId] = $position;
         }
-    
+
         return response()->json($queuePositions);
     }
 
-    public function destroy ($id)
+    public function destroy($id)
     {
         // Find the reservation by ID
         $reservation = Reservation::find($id);
@@ -282,7 +284,7 @@ class ReserveBookController extends Controller
         }
     }
 
-    public function cancelReservation (Request $request, $id)
+    public function cancelReservation(Request $request, $id)
     {
         // Find the record in the BorrowMaterial table by id
         $borrowMaterial = BorrowMaterial::find($id);
@@ -294,18 +296,18 @@ class ReserveBookController extends Controller
         }
 
         // Log the cancelation activity
-            // system - worker - position - || created borrow instance for || username - student id || with || book title 
-            $log = new ActivityLogController();
+        // system - worker - position - || created borrow instance for || username - student id || with || book title 
+        $log = new ActivityLogController();
 
-            $logParam = new \stdClass(); // Instantiate stdClass
-            $currentUser = Auth::user();
-            $logParam->system = 'Circulation';
-            $logParam->username = $currentUser->username;
-            $logParam->fullname = $currentUser->first_name . ' ' . $currentUser->middle_name . ' ' . $currentUser->last_name . ' ' . $currentUser->ext_name;
-            $logParam->position = $currentUser->position;
-            $logParam->desc = ' Cancelation of Reserve for '. $user->user_id . ' with book = ' . $borrowMaterial->book_id;
+        $logParam = new \stdClass(); // Instantiate stdClass
+        $currentUser = Auth::user();
+        $logParam->system = 'Circulation';
+        $logParam->username = $currentUser->username;
+        $logParam->fullname = $currentUser->first_name . ' ' . $currentUser->middle_name . ' ' . $currentUser->last_name . ' ' . $currentUser->ext_name;
+        $logParam->position = $currentUser->position;
+        $logParam->desc = ' Cancelation of Reserve for ' . $user->user_id . ' with book = ' . $borrowMaterial->book_id;
 
-            $log->savePersonnelLog($logParam);
+        $log->savePersonnelLog($logParam);
 
         $borrowMaterial->update([
             'status' => 3 // Assuming '3' is the status code for 'cancelled'
@@ -313,7 +315,6 @@ class ReserveBookController extends Controller
 
         return response()->json(['message' => 'Reservation cancelled successfully']);
     }
-    
 }
 
 
@@ -423,4 +424,3 @@ class ReserveBookController extends Controller
     //     // Return the combined result as JSON
     //     return response()->json($queueData);
     // }
-    
