@@ -237,7 +237,7 @@ class AuthController extends Controller
 
         $user = $request->user();
         if (!Hash::check($request->old_password, $user->password)) {
-            return response()->json(['messsage' => 'Old password is incorrect'], 422);
+            return response()->json(['message' => 'Old password is incorrect'], 422);
         } else if (Hash::check($request->new_password, $user->password)) {
             return response()->json(['message' => 'New password cannot be the same as the old password'], 422);
         } else {
