@@ -194,7 +194,7 @@ Route::middleware(['encrypt.response', 'decrypt.payload'])->group(function () {
             // PROJECTS
             Route::get('projects', [ProjectController::class, 'getProjects']);
             Route::get('project/id/{id}', [ProjectController::class, 'getProject']);
-            // Route::get('projects/department/{department}', [ProjectController::class, 'getByDepartment']);
+            Route::get('projects/department/{department}', [ProjectController::class, 'getByDepartment']);
             Route::post('projects/process', [ProjectController::class, 'add']);
             Route::post('projects/process/{id}', [ProjectController::class, 'update']);
 
