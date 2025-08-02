@@ -187,8 +187,9 @@ Route::middleware(['encrypt.response', 'decrypt.payload'])->group(function () {
 
             // MATERIAL VIEWING
             Route::get('books/locations', [LocationController::class, 'getLocations']);
-            Route::get('materials/{type}', [MaterialViewController::class, 'getMaterials']);
             Route::get('materials/{type}/type/{periodical_type}', [MaterialViewController::class, 'getMaterialsByType']);
+            Route::get('materials/{type}', [MaterialViewController::class, 'getMaterials']);
+            Route::get('materials/{type}/{isReport}', [MaterialViewController::class, 'getMaterials']);
             Route::get('material/id/{id}', [MaterialViewController::class, 'getMaterial']);
 
             // PROJECTS

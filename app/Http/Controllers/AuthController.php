@@ -129,6 +129,8 @@ class AuthController extends Controller
                     return response()->json(['message' => 'Unauthorized'], 401);
                 };
             } else if (in_array('student', $roles)) {
+                if ($system !== 'student') return response()->json(['message' => 'Unauthorized'], 401);
+
                 $student = User::with('student_program')->find($user->id);
 
                 $responseData = [

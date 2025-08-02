@@ -13,10 +13,9 @@ use App\Http\Controllers\ActivityLogController;
 
 class BookController extends Controller
 {
-    // const URL = 'http://26.68.32.39:8000';
-    const URL = 'http://127.0.0.1:8000';
 
-    public function add(Request $request) {
+    public function add(Request $request)
+    {
         $accessions = [];
         $request->validate([
             'accession' => 'required|string|max:20',
@@ -38,22 +37,22 @@ class BookController extends Controller
             'image_url' => 'nullable|mimes:jpeg,jpg,png'
         ]);
 
-        if($request->copies < 1) {
+        if ($request->copies < 1) {
             return response()->json(['Error' => 'Invalid number of copies'], 400);
         } else {
-            for($i = 0; $i < $request->copies; $i++) {
+            for ($i = 0; $i < $request->copies; $i++) {
 
                 $model = new Material();
                 try {
-                    
+
                     $model->fill($request->except(['accession', 'image_url', 'title']));
                     $model->material_type = 0;
-                    
+
                     // get id if request has an id
-                    if($i > 0 && $request->accession) {
+                    if ($i > 0 && $request->accession) {
 
                         $model->accession = $request->accession + $i;
-                    } else if($i == 0 && $request->accession) {
+                    } else if ($i == 0 && $request->accession) {
 
                         $model->accession = $request->accession;
                     }
@@ -63,7 +62,7 @@ class BookController extends Controller
                     return response()->json(['Error' => 'Invalid form request. Check values if on correct data format.', 400]);
                 }
 
-                if($request->image_url != null) {
+                if ($request->image_url != null) {
                     $ext = $request->file('image_url')->extension();
 
                     // Check file extension and raise error
@@ -75,27 +74,27 @@ class BookController extends Controller
                     $path = $request->file('image_url')->store('public/images/books');
 
                     $model->image_url = $path;
-                } 
-                
+                }
+
                 $authors = json_decode($request->authors, true);
 
-                foreach($authors as &$author) {
+                foreach ($authors as &$author) {
                     $author = Str::title($author);
                 }
 
                 $model->title = Str::title($request->title);
                 $model->authors = json_encode($authors);
                 $model->status = 0;
-                
-                // try {
+
+                try {
                     $model->save();
-                // } catch (\Illuminate\Database\QueryException $e) {
-                //     if ($e->getCode() == 23000) {
-                //         return response()->json(['message' => 'Duplicate accession entry detected.'], 409); // HTTP status code 409 for conflict
-                //     } else {
-                //         return response()->json(['message' => 'Cannot process request.'], 400); // HTTP status code 500 for internal server error
-                //     }
-                // }
+                } catch (\Illuminate\Database\QueryException $e) {
+                    if ($e->getCode() == 23000) {
+                        return response()->json(['message' => 'Duplicate accession entry detected.'], 409); // HTTP status code 409 for conflict
+                    } else {
+                        return response()->json(['message' => 'Cannot process request.'], 400); // HTTP status code 500 for internal server error
+                    }
+                }
             }
         }
 
@@ -110,16 +109,17 @@ class BookController extends Controller
         $logParam->fullname = $user->first_name . ' ' . $user->middle_name . ' ' . $user->last_name . ' ' . $user->ext_name;
         $logParam->position = $user->position;
 
-        if(count($accessions) == 1) $logParam->desc = 'Added book of accession ' . $request->accession;
+        if (count($accessions) == 1) $logParam->desc = 'Added book of accession ' . $request->accession;
         else $logParam->desc = 'Added books of accessions ' . $accessions[0] . ' - ' . $accessions[count($accessions) -  1];
 
         $log->savePersonnelLog($logParam);
-        
+
         return response()->json($model, 201);
     }
 
-    public function update(Request $request, $id) {
-        
+    public function update(Request $request, $id)
+    {
+
         $request->validate([
             'accession' => 'required|string|max:20',
             'title' => 'nullable|string|max:255',
@@ -147,7 +147,7 @@ class BookController extends Controller
             return response()->json(['Error' => 'Invalid form request. Check values if on correct data format.'], 400);
         }
 
-        if(!empty($request->image_url)) {
+        if (!empty($request->image_url)) {
             $ext = $request->file('image_url')->extension();
 
             // Check file extension and raise error
@@ -162,12 +162,12 @@ class BookController extends Controller
         $model->title = Str::title($request->title);
         $authors = json_decode($request->authors, true);
 
-        foreach($authors as &$author) {
+        foreach ($authors as &$author) {
             $author = Str::title($author);
         }
 
         $model->authors = json_encode($authors);
-        
+
         try {
             $model->save();
         } catch (\Illuminate\Database\QueryException $e) {
@@ -195,4 +195,3 @@ class BookController extends Controller
         return response()->json($model, 200);
     }
 }
-
