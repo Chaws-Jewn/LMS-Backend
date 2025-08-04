@@ -8,7 +8,7 @@ use App\Models\Book;
 use App\Models\Inventory;
 use App\Models\Material;
 use Illuminate\Support\Facades\Validator;
-use Illuminate\View\View;
+use FFI\Exception;
 
 class InventoryController extends Controller
 {
@@ -16,17 +16,19 @@ class InventoryController extends Controller
     //0 -> available, 1 -> unreturned, 2 -> missing, 3 -> unlabeled, 4 -> damaged
     public function getBookInventory($status)
     {
-        if(!in_array($status, [0, 1, 2, 3, 4])){
+        if (!in_array($status, [0, 1, 2, 3, 4])) {
             return response()->json(['error' => 'Page not found'], 404);
         }
 
         $books = Material::select('accession', 'location', 'title', 'authors', 'status')
-                    ->where('material_type', 0)
-                    ->where('status', $status)
-                    ->orderByDesc('created_at')
-                    ->get();
+            ->where('material_type', 0)
+            ->where('status', $status)
+            ->get()
+            ->sortBy(function ($material) {
+                return (int) $material->accession;
+            })->values();;
 
-        foreach($books as $book) {
+        foreach ($books as $book) {
             $book->authors = json_decode($book->authors);
         }
 
@@ -37,18 +39,18 @@ class InventoryController extends Controller
     {
         $search = $request->input('search', '');
 
-        if(!in_array($status, [0, 1, 2, 3, 4])){
+        if (!in_array($status, [0, 1, 2, 3, 4])) {
             return response()->json(['error' => 'Page not found'], 404);
         }
 
         $books = Material::select('accession', 'location', 'title', 'authors', 'status')
-                    ->where('material_type', 0)
-                    // ->where('status', $status)
-                    ->where('accession', $search)
-                    ->orderByDesc('created_at')
-                    ->get();
+            ->where('material_type', 0)
+            // ->where('status', $status)
+            ->where('accession', $search)
+            ->orderByDesc('created_at')
+            ->get();
 
-        foreach($books as $book) {
+        foreach ($books as $book) {
             $book->authors = json_decode($book->authors);
         }
 
@@ -57,12 +59,13 @@ class InventoryController extends Controller
         return $books;
     }
 
-    public function updateBookStatus(Request $request, $id) {
+    public function updateBookStatus(Request $request, $id)
+    {
         $data = Validator::make($request->all(), [
             'status' => 'required|numeric|between:0,4'
         ]);
 
-        if($data->fails()) {
+        if ($data->fails()) {
             return response()->json(['errors', $data->errors()], 400);
         }
 
@@ -88,10 +91,11 @@ class InventoryController extends Controller
         return response()->json(['success' => 'Item has been updated.'], 200);
     }
 
-    public function clearBooksHistory() {
+    public function clearBooksHistory()
+    {
         Material::where('material_type', 0)
-                // ->where('status', 0)
-                ->update(['status' => 0]);
+            // ->where('status', 0)
+            ->update(['status' => 0]);
 
         return response()->json(['success' => 'History has been cleared.'], 200);
     }

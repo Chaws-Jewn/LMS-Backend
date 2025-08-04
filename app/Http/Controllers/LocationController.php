@@ -11,7 +11,7 @@ class LocationController extends Controller
 {
     public function getLocations()
     {
-        $locations = Location::orderBy('created_at', 'desc')->get();
+        $locations = Location::orderBy('location_short')->get();
 
         return $locations;
     }
